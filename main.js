@@ -3,9 +3,12 @@ function navigate(pageId) {
   const page = document.getElementById(pageId);
   if (page) {
     page.classList.add('active');
-    loadGauges(); // make sure gauges re-render when a new page shows up
+    setTimeout(() => {
+      loadGauges(); // draw after DOM updates
+    }, 100);
   }
 }
+
 
 function createGauge(id, value, color) {
   const ctx = document.getElementById(id)?.getContext('2d');
