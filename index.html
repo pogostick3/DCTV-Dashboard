@@ -13,89 +13,95 @@
   <div id="mainPage" class="page active">
     <div class="header">Warehouse Dashboard</div>
     <div class="tile-container">
-      <!-- Tiles -->
-      <div class="tile" onclick="navigate('mzLevels')">
-        <h3>MZ</h3>
-        <div class="gauges horizontal">
-          <div><div class="metrics">Picking Perf: 78%</div><canvas id="mzPick"></canvas></div>
-          <div><div class="metrics">Stocking Perf: 91%</div><canvas id="mzStock"></canvas></div>
+      <div class="tile-row">
+        
+        <!-- Tiles -->
+        <div class="tile" onclick="navigate('mzLevels')">
+          <h3>MZ</h3>
+          <div class="gauges horizontal">
+            <div><div class="metrics">Picking Perf: 78%</div><canvas id="mzPick"></canvas></div>
+            <div><div class="metrics">Stocking Perf: 91%</div><canvas id="mzStock"></canvas></div>
+          </div>
+          <div class="metrics">Current Wave: 1</div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 60%"></div></div>
+          <div class="metrics">60%</div>
+          <div class="metrics">Expected: 1500</div>
+          <div class="metrics">Stocked: 1350</div>
+          <div class="metrics">Pieces Left: 150</div>
         </div>
-        <div class="metrics">Current Wave: 1</div>
-        <div class="progress-bar"><div class="progress-fill" style="width: 60%"></div></div>
-        <div class="metrics">60%</div>
-        <div class="metrics">Expected: 1500</div>
-        <div class="metrics">Stocked: 1350</div>
-        <div class="metrics">Pieces Left: 150</div>
+  
+        <div class="tile" onclick="navigate('cfLevels')">
+          <h3>CF</h3>
+          <div class="gauges horizontal">
+            <div><div class="metrics">Picking Perf: 80%</div><canvas id="cfPick"></canvas></div>
+            <div><div class="metrics">Stocking Perf: 88%</div><canvas id="cfStock"></canvas></div>
+          </div>
+          <div class="metrics">Current Wave: 2</div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 72%"></div></div>
+          <div class="metrics">72%</div>
+          <div class="metrics">Expected: 1400</div>
+          <div class="metrics">Stocked: 1010</div>
+          <div class="metrics">Pieces Left: 390</div>
+        </div>
+  
+        <div class="tile" onclick="navigate('hbLevels')">
+          <h3>HB</h3>
+          <div class="gauges horizontal">
+            <div><div class="metrics">Picking Perf: 65%</div><canvas id="hbPick"></canvas></div>
+            <div><div class="metrics">Stocking Perf: 79%</div><canvas id="hbStock"></canvas></div>
+          </div>
+          <div class="metrics">Current Wave: 3</div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 50%"></div></div>
+          <div class="metrics">50%</div>
+          <div class="metrics">Expected: 1600</div>
+          <div class="metrics">Stocked: 800</div>
+          <div class="metrics">Pieces Left: 800</div>
+        </div>
       </div>
 
-      <div class="tile" onclick="navigate('cfLevels')">
-        <h3>CF</h3>
-        <div class="gauges horizontal">
-          <div><div class="metrics">Picking Perf: 80%</div><canvas id="cfPick"></canvas></div>
-          <div><div class="metrics">Stocking Perf: 88%</div><canvas id="cfStock"></canvas></div>
+      
+      <div class="tile-row">
+        <div class="tile" onclick="navigate('ncLevels')">
+          <h3>NC</h3>
+          <div class="gauges horizontal">
+            <div><div class="metrics">Picking Perf: 90%</div><canvas id="ncPick"></canvas></div>
+            <div><div class="metrics">Stocking Perf: 94%</div><canvas id="ncStock"></canvas></div>
+          </div>
+          <div class="metrics">Current Wave: 4</div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 84%"></div></div>
+          <div class="metrics">84%</div>
+          <div class="metrics">Expected: 1900</div>
+          <div class="metrics">Stocked: 1800</div>
+          <div class="metrics">Pieces Left: 100</div>
         </div>
-        <div class="metrics">Current Wave: 2</div>
-        <div class="progress-bar"><div class="progress-fill" style="width: 72%"></div></div>
-        <div class="metrics">72%</div>
-        <div class="metrics">Expected: 1400</div>
-        <div class="metrics">Stocked: 1010</div>
-        <div class="metrics">Pieces Left: 390</div>
-      </div>
-
-      <div class="tile" onclick="navigate('hbLevels')">
-        <h3>HB</h3>
-        <div class="gauges horizontal">
-          <div><div class="metrics">Picking Perf: 65%</div><canvas id="hbPick"></canvas></div>
-          <div><div class="metrics">Stocking Perf: 79%</div><canvas id="hbStock"></canvas></div>
+  
+        <div class="tile" onclick="navigate('rrLevels')">
+          <h3>RR</h3>
+          <div class="gauges horizontal">
+            <div><div class="metrics">Picking Perf: 72%</div><canvas id="rrPick"></canvas></div>
+            <div><div class="metrics">Stocking Perf: 85%</div><canvas id="rrStock"></canvas></div>
+          </div>
+          <div class="metrics">Current Wave: 5</div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 68%"></div></div>
+          <div class="metrics">68%</div>
+          <div class="metrics">Expected: 1750</div>
+          <div class="metrics">Stocked: 1190</div>
+          <div class="metrics">Pieces Left: 560</div>
         </div>
-        <div class="metrics">Current Wave: 3</div>
-        <div class="progress-bar"><div class="progress-fill" style="width: 50%"></div></div>
-        <div class="metrics">50%</div>
-        <div class="metrics">Expected: 1600</div>
-        <div class="metrics">Stocked: 800</div>
-        <div class="metrics">Pieces Left: 800</div>
-      </div>
-
-      <div class="tile" onclick="navigate('ncLevels')">
-        <h3>NC</h3>
-        <div class="gauges horizontal">
-          <div><div class="metrics">Picking Perf: 90%</div><canvas id="ncPick"></canvas></div>
-          <div><div class="metrics">Stocking Perf: 94%</div><canvas id="ncStock"></canvas></div>
+  
+        <div class="tile" onclick="navigate('shipLevels')">
+          <h3>Shipping</h3>
+          <div class="gauges horizontal">
+            <div><div class="metrics">Picking Perf: 96%</div><canvas id="shipPick"></canvas></div>
+            <div><div class="metrics">Stocking Perf: 98%</div><canvas id="shipStock"></canvas></div>
+          </div>
+          <div class="metrics">Current Wave: 6</div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 92%"></div></div>
+          <div class="metrics">92%</div>
+          <div class="metrics">Expected: 2100</div>
+          <div class="metrics">Stocked: 2050</div>
+          <div class="metrics">Pieces Left: 50</div>
         </div>
-        <div class="metrics">Current Wave: 4</div>
-        <div class="progress-bar"><div class="progress-fill" style="width: 84%"></div></div>
-        <div class="metrics">84%</div>
-        <div class="metrics">Expected: 1900</div>
-        <div class="metrics">Stocked: 1800</div>
-        <div class="metrics">Pieces Left: 100</div>
-      </div>
-
-      <div class="tile" onclick="navigate('rrLevels')">
-        <h3>RR</h3>
-        <div class="gauges horizontal">
-          <div><div class="metrics">Picking Perf: 72%</div><canvas id="rrPick"></canvas></div>
-          <div><div class="metrics">Stocking Perf: 85%</div><canvas id="rrStock"></canvas></div>
-        </div>
-        <div class="metrics">Current Wave: 5</div>
-        <div class="progress-bar"><div class="progress-fill" style="width: 68%"></div></div>
-        <div class="metrics">68%</div>
-        <div class="metrics">Expected: 1750</div>
-        <div class="metrics">Stocked: 1190</div>
-        <div class="metrics">Pieces Left: 560</div>
-      </div>
-
-      <div class="tile" onclick="navigate('shipLevels')">
-        <h3>Shipping</h3>
-        <div class="gauges horizontal">
-          <div><div class="metrics">Picking Perf: 96%</div><canvas id="shipPick"></canvas></div>
-          <div><div class="metrics">Stocking Perf: 98%</div><canvas id="shipStock"></canvas></div>
-        </div>
-        <div class="metrics">Current Wave: 6</div>
-        <div class="progress-bar"><div class="progress-fill" style="width: 92%"></div></div>
-        <div class="metrics">92%</div>
-        <div class="metrics">Expected: 2100</div>
-        <div class="metrics">Stocked: 2050</div>
-        <div class="metrics">Pieces Left: 50</div>
       </div>
     </div>
   </div>
