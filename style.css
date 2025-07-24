@@ -1,0 +1,64 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f0f0f0;
+  overflow-x: hidden;
+}
+
+.header {
+  background-color: #004c6d;
+  color: white;
+  text-align: center;
+  padding: 12px 0;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.tile-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 10px;
+  gap: 12px;
+}
+
+.tile {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  width: 300px;
+  padding: 10px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.gauges.horizontal {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.gauges canvas {
+  width: 100px !important;
+  height: 50px !important;
+}
+
+.metrics {
+  font-size: 0.9rem;
+  margin: 4px 0;
+}
+
+.progress-bar {
+  background-color: #ddd;
+  border-radius: 10px;
+  overflow: hidden;
+  height: 10px;
+  width: 90%;
+  margin: 6px auto;
+}
+
+.progress-fill {
+  background-color: #5cb85c;
+  height: 100%;
+}
