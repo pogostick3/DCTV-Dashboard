@@ -40,6 +40,26 @@ body {
   box-sizing: border-box;
   text-align: center;
 }
+.levels-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100vh;
+  padding: 10px;
+}
+
+.levels-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+}
+
+.levels-row .tile {
+  width: 30%;
+  min-width: 300px;
+}
 
 .gauges.horizontal {
   display: flex;
