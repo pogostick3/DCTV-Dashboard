@@ -21,25 +21,3 @@ window.onload = () => {
     createGauge(id, val, val > 85 ? '#5cb85c' : '#f39c12')
   );
 };
-function createGauge(id, value, color) {
-  const ctx = document.getElementById(id).getContext('2d');
-  new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      datasets: [{
-        data: [value, 100 - value],
-        backgroundColor: [color, '#e6e6e6'],
-        borderWidth: 0
-      }]
-    },
-    options: {
-      rotation: -90,
-      circumference: 180,
-      cutout: '70%',
-      plugins: {
-        legend: { display: false },
-        tooltip: { enabled: false }
-      }
-    }
-  });
-}
