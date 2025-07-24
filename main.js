@@ -11,9 +11,17 @@ function navigate(pageId) {
 
 
 function createGauge(id, value, color) {
-  const ctx = document.getElementById(id)?.getContext('2d');
-  if (!ctx) return;
-  new Chart(ctx, {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+
+  // Clear any previous chart
+  if (canvas.chartInstance) {
+    canvas.chartInstance.destroy();
+  }
+
+  const chart = new Chart(ctx, {
     type: 'doughnut',
     data: {
       datasets: [{
@@ -32,7 +40,10 @@ function createGauge(id, value, color) {
       }
     }
   });
+
+  canvas.chartInstance = chart;
 }
+
 
 function loadGauges() {
   const gauges = [
