@@ -62,3 +62,9 @@ body {
   background-color: #5cb85c;
   height: 100%;
 }
+.page {
+  display: none;
+}
+.page.active {
+  display: block;
+}
