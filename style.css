@@ -15,12 +15,13 @@ body {
 }
 
 .tile-container {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* Always 3 columns */
   gap: 12px;
+  justify-items: center;
+  padding: 10px;
 }
+
 
 .tile {
   background: white;
