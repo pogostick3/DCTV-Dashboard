@@ -16,12 +16,13 @@ body {
 
 .tile-container {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* Always 3 columns */
+  grid-template-columns: repeat(3, 1fr); /* Force 3 columns */
   gap: 12px;
-  justify-items: center;
+  justify-content: center;
+  max-width: 1020px; /* 3 tiles * ~320px */
+  margin: 0 auto;
   padding: 10px;
 }
-
 
 .tile {
   background: white;
