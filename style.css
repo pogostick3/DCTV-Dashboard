@@ -160,3 +160,13 @@ body {
 .page.active {
   display: block;
 }
+
+.metrics-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.section.stocking {
+  flex-direction: row-reverse;
+}
