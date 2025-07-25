@@ -1,3 +1,4 @@
+/* Base Styling */
 body {
   margin: 0;
   font-family: Arial, sans-serif;
@@ -14,6 +15,75 @@ body {
   font-weight: bold;
 }
 
+.page {
+  display: none;
+}
+
+.page.active {
+  display: block;
+}
+
+/* Tile Layout */
+.tile-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+}
+
+.tile-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.tile {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  padding: 10px;
+  width: 30%;
+  min-width: 300px;
+  box-sizing: border-box;
+  text-align: center;
+  cursor: pointer;
+}
+
+.gauges.horizontal {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.gauges canvas {
+  width: 100px !important;
+  height: 50px !important;
+}
+
+.metrics {
+  font-size: 0.9rem;
+  margin: 4px 0;
+}
+
+.progress-bar {
+  background-color: #ddd;
+  border-radius: 10px;
+  overflow: hidden;
+  height: 10px;
+  width: 90%;
+  margin: 6px auto;
+}
+
+.progress-fill {
+  background-color: #5cb85c;
+  height: 100%;
+}
+
+/* Levels Page Layout */
 .levels-container-vertical {
   display: flex;
   flex-direction: column;
@@ -41,55 +111,84 @@ body {
 .status-green {
   background-color: #28a745;
 }
+
 .status-yellow {
   background-color: #ffc107;
 }
+
 .status-red {
   background-color: #dc3545;
 }
 
+.level-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 .section {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 30px;
+  gap: 20px;
   padding: 10px 0;
 }
 
 .section.picking .gauges {
   order: 1;
 }
+
 .section.picking .performance {
   order: 2;
   border-left: 2px solid #ccc;
   padding-left: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   flex: 1;
 }
 
-.section.stocking {
-  flex-direction: row-reverse;
-}
 .section.stocking .gauges {
   order: 2;
 }
+
 .section.stocking .performance {
   order: 1;
   border-right: 2px solid #ccc;
   padding-right: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
   text-align: right;
   flex: 1;
 }
 
-.gauges {
-  width: 140px;
-  text-align: center;
+.metrics-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
 }
 
-.gauges canvas {
-  width: 100px !important;
-  height: 50px !important;
-}
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .tile {
+    width: 90%;
+  }
 
-.performance .metrics {
-  font-size: 0.95rem;
-  margin: 4px 0;
+  .section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .section.picking .performance,
+  .section.stocking .performance {
+    border: none;
+    text-align: left;
+    align-items: flex-start;
+    padding: 0;
+  }
+
+  .metrics-group {
+    align-items: flex-start;
+  }
 }
