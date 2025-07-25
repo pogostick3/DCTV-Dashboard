@@ -85,35 +85,45 @@ body {
 
 .section {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
+  gap: 20px;
   padding: 10px 0;
 }
 
-.section h4 {
-  width: 100px;
-  margin: 0;
+.section.picking .gauges {
+  order: 1;
 }
 
-.gauges {
-  flex: 0 0 auto;
-  width: 120px;
-  text-align: center;
-}
-
-.performance {
-  flex: 1;
-  text-align: left;
+.section.picking .performance {
+  order: 2;
+  border-left: 2px solid #ccc;
   padding-left: 15px;
 }
 
-.section:nth-child(2) {
-  flex-direction: row-reverse;
+.section.stocking .gauges {
+  order: 2;
+}
+
+.section.stocking .performance {
+  order: 1;
+  border-right: 2px solid #ccc;
+  padding-right: 15px;
+  text-align: right;
+}
+
+.gauges {
+  width: 120px;
+  text-align: center;
 }
 
 .gauges canvas {
   width: 100px !important;
   height: 50px !important;
+}
+
+.performance {
+  flex: 1;
 }
 
 .metrics {
