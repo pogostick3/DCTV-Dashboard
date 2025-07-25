@@ -35,58 +35,86 @@ body {
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   padding: 10px;
-  width: 30%; /* ~1/3 of row */
+  width: 30%;
   min-width: 300px;
   box-sizing: border-box;
   text-align: center;
 }
 
-/* 🔧 NEW: Levels Layout */
+/* Levels Tile Redesign */
 .levels-container {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: stretch;
+  height: 100vh;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.levels-column {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  padding: 0;
-  margin: 0;
+  justify-content: space-between;
+  width: 33.33%;
+  padding: 10px;
+  box-sizing: border-box;
 }
 
 .level-tile {
-  flex: 1; /* 1/3 of screen height */
-  width: 100%;
-  box-sizing: border-box;
-  padding: 20px;
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  padding: 10px;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  justify-content: space-between;
+  height: 32%;
+  position: relative;
 }
 
-/* Keep existing .levels-row in case it's still used elsewhere */
-.levels-row {
+.level-section {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  flex: 1;
+  padding: 5px 0;
 }
 
-.levels-row .tile {
-  width: 30%;
-  min-width: 300px;
+.performance {
+  text-align: center;
 }
 
-.gauges.horizontal {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  margin-bottom: 10px;
+.performance .metrics {
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+.status-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.status-green {
+  background-color: #5cb85c;
+}
+
+.status-yellow {
+  background-color: #f0ad4e;
+}
+
+.status-red {
+  background-color: #d9534f;
 }
 
 .gauges canvas {
-  width: 100px !important;
-  height: 50px !important;
+  width: 80px !important;
+  height: 40px !important;
 }
 
 .metrics {
