@@ -41,94 +41,74 @@ body {
   text-align: center;
 }
 
-/* Levels Tile Redesign */
-.levels-container {
-  flex: 1;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-around;
-  align-items: stretch;
-  height: 100vh;
-  padding: 10px;
-  box-sizing: border-box;
-  gap: 10px;
-}
-
-.levels-column {
+.levels-container-vertical {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  width: 33.33%;
-  padding: 10px;
-  box-sizing: border-box;
-  gap: 10px;
+  gap: 20px;
+  padding: 20px;
 }
 
 .level-tile {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  padding: 10px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  flex: 1;
-  min-height: 0;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  padding: 20px;
   position: relative;
-  overflow: hidden;
+}
+
+.status-dot {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.status-green {
+  background-color: #28a745;
+}
+
+.status-yellow {
+  background-color: #ffc107;
+}
+
+.status-red {
+  background-color: #dc3545;
 }
 
 .level-sections {
   display: flex;
-  flex-direction: row;
-  justify-content: space-evenly;
-  align-items: flex-start;
+  flex-direction: column;
   gap: 20px;
 }
 
 .section {
-  flex: 1;
   display: flex;
-  flex-direction: column;
   align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
 }
 
 .section h4 {
-  margin: 0 0 4px 0;
-  font-size: 1rem;
+  width: 100px;
+  margin: 0;
+}
+
+.gauges {
+  flex: 0 0 auto;
+  width: 120px;
+  text-align: center;
 }
 
 .performance {
-  text-align: center;
-  margin-top: 6px;
+  flex: 1;
+  text-align: left;
+  padding-left: 15px;
 }
 
-.performance .metrics {
-  font-size: 0.9rem;
-  margin: 2px 0;
-}
-
-.status-dot {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  box-shadow: 0 0 4px rgba(0,0,0,0.3);
-}
-
-.status-green {
-  background-color: #5cb85c;
-}
-
-.status-yellow {
-  background-color: #f0ad4e;
-}
-
-.status-red {
-  background-color: #d9534f;
+.section:nth-child(2) {
+  flex-direction: row-reverse;
 }
 
 .gauges canvas {
