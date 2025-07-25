@@ -51,6 +51,7 @@ body {
   height: 100vh;
   padding: 10px;
   box-sizing: border-box;
+  gap: 10px;
 }
 
 .levels-column {
@@ -60,6 +61,7 @@ body {
   width: 33.33%;
   padding: 10px;
   box-sizing: border-box;
+  gap: 10px;
 }
 
 .level-tile {
@@ -71,8 +73,10 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  height: 32%;
+  flex: 1;
+  min-height: 0;
   position: relative;
+  overflow: hidden;
 }
 
 .level-section {
@@ -80,10 +84,12 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 5px 0;
+  gap: 10px;
 }
 
 .performance {
   text-align: center;
+  flex: 1;
 }
 
 .performance .metrics {
@@ -98,6 +104,7 @@ body {
   position: absolute;
   top: 10px;
   right: 10px;
+  box-shadow: 0 0 4px rgba(0,0,0,0.3);
 }
 
 .status-green {
@@ -113,8 +120,8 @@ body {
 }
 
 .gauges canvas {
-  width: 80px !important;
-  height: 40px !important;
+  width: 100px !important;
+  height: 50px !important;
 }
 
 .metrics {
