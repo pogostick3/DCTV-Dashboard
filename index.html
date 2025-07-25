@@ -108,53 +108,105 @@
 
   <!-- Child Pages -->
     <!-- MZ Levels Page -->
-<!-- MZ Levels Page -->
+<!-- Updated MZ Levels Page HTML -->
 <div id="mzLevels" class="page">
   <div class="header">MZ Levels <button onclick="navigate('mainPage')">Home</button></div>
   <div class="levels-container">
-    <div class="level-tile">
-      <h3>MZ Level 1</h3>
-      <div class="gauges horizontal">
-        <div><div class="metrics">Picking Perf: 80%</div><canvas id="mzL1Pick"></canvas></div>
-        <div><div class="metrics">Stocking Perf: 89%</div><canvas id="mzL1Stock"></canvas></div>
+    <!-- Column for MZ Level 1 -->
+    <div class="levels-column">
+      <div class="level-tile" id="mzL1Tile">
+        <h3>MZ Level 1</h3>
+        <div class="status-dot" id="mzL1Status"></div>
+        <div class="level-section">
+          <div class="performance">
+            <div>Picking</div>
+            <canvas id="mzL1Pick"></canvas>
+            <div class="metrics">80%</div>
+          </div>
+          <div class="details">
+            <div>Current Wave: 1</div>
+            <div>Progress: 75%</div>
+          </div>
+        </div>
+        <div class="level-section">
+          <div class="performance">
+            <div>Stocking</div>
+            <canvas id="mzL1Stock"></canvas>
+            <div class="metrics">89%</div>
+          </div>
+          <div class="details">
+            <div>Expected: 800</div>
+            <div>Stocked: 700</div>
+            <div>Remaining: 100</div>
+          </div>
+        </div>
       </div>
-      <div class="metrics">Current Wave: 1</div>
-      <div class="progress-bar"><div class="progress-fill" style="width: 75%"></div></div>
-      <div class="metrics">75%</div>
-      <div class="metrics">Expected: 800</div>
-      <div class="metrics">Stocked: 700</div>
-      <div class="metrics">Pieces Left: 100</div>
     </div>
 
-    <div class="level-tile">
-      <h3>MZ Level 2</h3>
-      <div class="gauges horizontal">
-        <div><div class="metrics">Picking Perf: 85%</div><canvas id="mzL2Pick"></canvas></div>
-        <div><div class="metrics">Stocking Perf: 93%</div><canvas id="mzL2Stock"></canvas></div>
+    <!-- Column for MZ Level 2 -->
+    <div class="levels-column">
+      <div class="level-tile" id="mzL2Tile">
+        <h3>MZ Level 2</h3>
+        <div class="status-dot" id="mzL2Status"></div>
+        <div class="level-section">
+          <div class="performance">
+            <div>Picking</div>
+            <canvas id="mzL2Pick"></canvas>
+            <div class="metrics">85%</div>
+          </div>
+          <div class="details">
+            <div>Current Wave: 1</div>
+            <div>Progress: 82%</div>
+          </div>
+        </div>
+        <div class="level-section">
+          <div class="performance">
+            <div>Stocking</div>
+            <canvas id="mzL2Stock"></canvas>
+            <div class="metrics">93%</div>
+          </div>
+          <div class="details">
+            <div>Expected: 900</div>
+            <div>Stocked: 830</div>
+            <div>Remaining: 70</div>
+          </div>
+        </div>
       </div>
-      <div class="metrics">Current Wave: 1</div>
-      <div class="progress-bar"><div class="progress-fill" style="width: 82%"></div></div>
-      <div class="metrics">82%</div>
-      <div class="metrics">Expected: 900</div>
-      <div class="metrics">Stocked: 830</div>
-      <div class="metrics">Pieces Left: 70</div>
     </div>
 
-    <div class="level-tile">
-      <h3>MZ Level 3</h3>
-      <div class="gauges horizontal">
-        <div><div class="metrics">Picking Perf: 70%</div><canvas id="mzL3Pick"></canvas></div>
-        <div><div class="metrics">Stocking Perf: 80%</div><canvas id="mzL3Stock"></canvas></div>
+    <!-- Column for MZ Level 3 -->
+    <div class="levels-column">
+      <div class="level-tile" id="mzL3Tile">
+        <h3>MZ Level 3</h3>
+        <div class="status-dot" id="mzL3Status"></div>
+        <div class="level-section">
+          <div class="performance">
+            <div>Picking</div>
+            <canvas id="mzL3Pick"></canvas>
+            <div class="metrics">70%</div>
+          </div>
+          <div class="details">
+            <div>Current Wave: 1</div>
+            <div>Progress: 60%</div>
+          </div>
+        </div>
+        <div class="level-section">
+          <div class="performance">
+            <div>Stocking</div>
+            <canvas id="mzL3Stock"></canvas>
+            <div class="metrics">80%</div>
+          </div>
+          <div class="details">
+            <div>Expected: 1000</div>
+            <div>Stocked: 600</div>
+            <div>Remaining: 400</div>
+          </div>
+        </div>
       </div>
-      <div class="metrics">Current Wave: 1</div>
-      <div class="progress-bar"><div class="progress-fill" style="width: 60%"></div></div>
-      <div class="metrics">60%</div>
-      <div class="metrics">Expected: 1000</div>
-      <div class="metrics">Stocked: 600</div>
-      <div class="metrics">Pieces Left: 400</div>
     </div>
   </div>
 </div>
+
 
 </div>
 
