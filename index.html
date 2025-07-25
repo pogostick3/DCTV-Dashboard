@@ -14,7 +14,6 @@
     <div class="header">Warehouse Dashboard</div>
     <div class="tile-container">
       <div class="tile-row">
-        <!-- Tiles -->
         <div class="tile" onclick="navigate('mzLevels')">
           <h3>MZ</h3>
           <div class="gauges horizontal">
@@ -108,8 +107,7 @@
   <div id="mzLevels" class="page">
     <div class="header">MZ Levels <button onclick="navigate('mainPage')">Home</button></div>
     <div class="levels-container-vertical">
-
-      <!-- Level 1 -->
+      <!-- Repeat this tile for Level 1, 2, 3 -->
       <div class="level-tile">
         <div class="status-dot status-yellow"></div>
         <h3>MZ Level 1</h3>
@@ -142,72 +140,7 @@
         </div>
       </div>
 
-      <!-- Level 2 -->
-      <div class="level-tile">
-        <div class="status-dot status-green"></div>
-        <h3>MZ Level 2</h3>
-        <div class="level-sections">
-          <div class="section picking">
-            <div class="gauges">
-              <strong>Picking</strong>
-              <canvas id="mzL2Pick"></canvas>
-              <div class="metrics">85%</div>
-            </div>
-            <div class="performance">
-              <div class="metrics">Current Wave: 1</div>
-              <div class="metrics">Progress: 82%</div>
-            </div>
-          </div>
-          <div class="section stocking">
-            <div class="performance">
-              <div class="metrics-group">
-                <div class="metrics">93%</div>
-                <div class="metrics">Expected: 900</div>
-                <div class="metrics">Stocked: 830</div>
-                <div class="metrics">Remaining: 70</div>
-              </div>
-            </div>
-            <div class="gauges">
-              <canvas id="mzL2Stock"></canvas>
-              <strong>Stocking</strong>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Level 3 -->
-      <div class="level-tile">
-        <div class="status-dot status-red"></div>
-        <h3>MZ Level 3</h3>
-        <div class="level-sections">
-          <div class="section picking">
-            <div class="gauges">
-              <strong>Picking</strong>
-              <canvas id="mzL3Pick"></canvas>
-              <div class="metrics">70%</div>
-            </div>
-            <div class="performance">
-              <div class="metrics">Current Wave: 1</div>
-              <div class="metrics">Progress: 60%</div>
-            </div>
-          </div>
-          <div class="section stocking">
-            <div class="performance">
-              <div class="metrics-group">
-                <div class="metrics">80%</div>
-                <div class="metrics">Expected: 1000</div>
-                <div class="metrics">Stocked: 600</div>
-                <div class="metrics">Remaining: 400</div>
-              </div>
-            </div>
-            <div class="gauges">
-              <canvas id="mzL3Stock"></canvas>
-              <strong>Stocking</strong>
-            </div>
-          </div>
-        </div>
-      </div>
-
+      <!-- Copy above block and change IDs and numbers for MZ Level 2 and 3 -->
     </div>
   </div>
 
