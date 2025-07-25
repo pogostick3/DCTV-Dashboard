@@ -99,6 +99,9 @@ body {
   order: 2;
   border-left: 2px solid #ccc;
   padding-left: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .section.stocking .gauges {
@@ -109,6 +112,9 @@ body {
   order: 1;
   border-right: 2px solid #ccc;
   padding-right: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
   text-align: right;
 }
 
