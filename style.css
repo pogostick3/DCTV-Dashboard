@@ -14,33 +14,6 @@ body {
   font-weight: bold;
 }
 
-.tile-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
-
-.tile-row {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  width: 100%;
-  max-width: 100%;
-  flex-wrap: nowrap;
-}
-
-.tile {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  padding: 10px;
-  width: 30%;
-  min-width: 300px;
-  box-sizing: border-box;
-  text-align: center;
-}
-
 .levels-container-vertical {
   display: flex;
   flex-direction: column;
@@ -68,60 +41,46 @@ body {
 .status-green {
   background-color: #28a745;
 }
-
 .status-yellow {
   background-color: #ffc107;
 }
-
 .status-red {
   background-color: #dc3545;
 }
 
-.level-sections {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
 .section {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 20px;
+  gap: 30px;
   padding: 10px 0;
 }
 
 .section.picking .gauges {
   order: 1;
 }
-
 .section.picking .performance {
   order: 2;
   border-left: 2px solid #ccc;
   padding-left: 15px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
   flex: 1;
 }
 
+.section.stocking {
+  flex-direction: row-reverse;
+}
 .section.stocking .gauges {
   order: 2;
 }
-
 .section.stocking .performance {
   order: 1;
   border-right: 2px solid #ccc;
   padding-right: 15px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
   text-align: right;
   flex: 1;
 }
 
 .gauges {
-  width: 120px;
+  width: 140px;
   text-align: center;
 }
 
@@ -130,43 +89,7 @@ body {
   height: 50px !important;
 }
 
-.performance {
-  flex: 1;
-}
-
-.metrics {
-  font-size: 0.9rem;
+.performance .metrics {
+  font-size: 0.95rem;
   margin: 4px 0;
-}
-
-.progress-bar {
-  background-color: #ddd;
-  border-radius: 10px;
-  overflow: hidden;
-  height: 10px;
-  width: 90%;
-  margin: 6px auto;
-}
-
-.progress-fill {
-  background-color: #5cb85c;
-  height: 100%;
-}
-
-.page {
-  display: none;
-}
-
-.page.active {
-  display: block;
-}
-
-.metrics-group {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-}
-
-.section.stocking {
-  flex-direction: row-reverse;
 }
