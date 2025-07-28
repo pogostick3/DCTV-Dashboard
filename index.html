@@ -108,48 +108,49 @@
     <div class="header">MZ Levels <button onclick="navigate('mainPage')">Home</button></div>
     <div class="levels-container-vertical">
       
-      <!-- MZ Level 1-->
-      <div class="level-tile">
-        <div class="status-dot status-yellow"></div>
+      <!-- MZ Level 1 -->
+      <div class="level-tile"> <!-- level-tile -->
+        <div class="status-dot status-yellow"></div> <!-- status-dot -->
         <h3>MZ Level 1</h3>
-        <div class="level-sections">
-          <div class="section picking">
-            <div class="section-left">
-              <div class="gauges">
+        <div class="level-sections"> <!-- level-sections -->
+
+          <div class="section picking"> <!-- section picking -->
+            <div class="section-left"> <!-- section-left -->
+              <div class="gauges"> <!-- gauges -->
                 <strong>Picking</strong>
                 <canvas id="mzL1Pick"></canvas>
                 <div class="metrics">80%</div>
-              </div>
-            </div>
-            <div class="section-right">
-              <div class="performance">
+              </div> <!-- gauges -->
+            </div> <!-- section-left -->
+            <div class="section-right"> <!-- section-right -->
+              <div class="performance"> <!-- performance -->
                 <div class="metrics">Current Wave: 1</div>
                 <div class="metrics">Progress: 75%</div>
-                <div class="progress-bar">
-                  <div class="progress-fill" style="width: 75%"></div>
-                </div>
-              </div>
-            </div>
-          </div>
+                <div class="progress-bar"> <!-- progress-bar -->
+                  <div class="progress-fill" style="width: 75%"></div> <!-- progress-fill -->
+                </div> <!-- progress-bar -->
+              </div> <!-- performance -->
+            </div> <!-- section-right -->
+          </div> <!-- section picking -->
 
-          </div>
-          <div class="section stocking">
-            <div class="performance">
-              <div class="metrics-group">
+          <div class="section stocking"> <!-- section stocking -->
+            <div class="section-left"> <!-- section-left -->
+              <div class="metrics-group"> <!-- metrics-group -->
                 <div class="metrics">89%</div>
                 <div class="metrics">Expected: 800</div>
                 <div class="metrics">Stocked: 700</div>
                 <div class="metrics">Remaining: 100</div>
-              </div>
-            </div>
-            <div class="gauges">
-              <canvas id="mzL1Stock"></canvas>
-              <strong>Stocking</strong>
-            </div>
-          </div>
-        </div>
-      </div>
-
+              </div> <!-- metrics-group -->
+            </div> <!-- section-left -->
+            <div class="section-right"> <!-- section-right -->
+              <div class="gauges"> <!-- gauges -->
+                <canvas id="mzL1Stock"></canvas>
+                <strong>Stocking</strong>
+              </div> <!-- gauges -->
+            </div> <!-- section-right -->
+          </div> <!-- section stocking -->
+        </div> <!-- level-sections -->
+      </div> <!-- level-tile -->
       <!-- MZ Level 2-->
         <div class="level-tile">
         <div class="status-dot status-yellow"></div>
@@ -188,7 +189,8 @@
           </div>
         </div>
       </div>
-
+        </div> <!-- level-sections -->
+      </div> <!-- level-tile -->
       <!-- MZ Level 3-->
       <div class="level-tile">
         <div class="status-dot status-yellow"></div>
