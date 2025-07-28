@@ -111,52 +111,50 @@ body {
 
 .level-sections {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 40px;
 }
 
 .section {
   display: flex;
-  justify-content: space-between;
+  flex: 1;
   align-items: center;
   gap: 20px;
 }
 
-.section.picking .gauges {
-  order: 1;
+.section.picking .gauges,
+.section.stocking .gauges {
+  flex-shrink: 0;
 }
 
-.section.picking .performance {
-  order: 2;
-  border-left: 2px solid #ccc;
-  padding-left: 15px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  flex: 1;
+.section.picking {
+  flex-direction: row;
+  border-right: 2px solid #ccc;
+  padding-right: 15px;
 }
 
 .section.stocking {
   flex-direction: row-reverse;
+  padding-left: 15px;
 }
 
-.section.stocking .gauges {
-  order: 2;
-}
-
-.section.stocking .performance {
-  order: 1;
-  border-right: 2px solid #ccc;
-  padding-right: 15px;
+.performance {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  text-align: right;
+  justify-content: center;
   flex: 1;
 }
 
 .metrics-group {
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  flex: 1;
+  align-items: flex-start;
+}
+
+.section.stocking .metrics-group {
   align-items: flex-end;
+  text-align: right;
 }
