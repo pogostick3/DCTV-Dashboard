@@ -111,33 +111,45 @@ body {
 
 .level-sections {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  gap: 40px;
+  flex-direction: column;
+  gap: 30px;
 }
 
 .section {
   display: flex;
-  flex: 1;
+  flex-direction: row;
   align-items: center;
+  justify-content: space-between;
   gap: 20px;
 }
 
-.section.picking {
-  flex-direction: row;
-  border-right: 2px solid #ccc;
-  padding-right: 15px;
-  justify-content: flex-start;
+.section.picking .gauges {
+  order: 1;
 }
 
-.section.stocking {
-  flex-direction: row;
-  padding-left: 15px;
-  justify-content: flex-end;
+.section.picking .performance {
+  order: 2;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
 }
 
-.section.picking .gauges,
+.section.stocking .metrics-group {
+  order: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+
 .section.stocking .gauges {
+  order: 2;
+}
+
+.section .gauges {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -145,30 +157,16 @@ body {
   min-width: 100px;
 }
 
-.performance,
-.metrics-group {
-  display: flex;
-  flex-direction: column;
+.section .performance,
+.section .metrics-group {
   justify-content: center;
-  flex: 1;
 }
 
-.performance {
-  align-items: flex-start;
-  text-align: left;
-}
-
-.metrics-group {
-  align-items: flex-end;
-  text-align: right;
-}
-
-.section.stocking .gauges {
-  order: 2;
-  margin-left: 10px;
-}
-
-.section.stocking .metrics-group {
-  order: 1;
-  margin-right: 10px;
+.progress-bar {
+  background-color: #ddd;
+  border-radius: 10px;
+  overflow: hidden;
+  height: 10px;
+  width: 100%;
+  margin: 6px 0;
 }
