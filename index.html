@@ -9,111 +9,113 @@
   <script src="main.js" defer></script>
 </head>
 <body>
-  <!-- Main Dashboard Page -->
-  <div id="mainPage" class="page active">
-    <div class="header">Warehouse Dashboard</div>
-    <div class="tile-container">
-      <div class="tile-row">
-        <div class="tile" onclick="navigate('mzLevels')">
+  <div id="mainPage" class="page active"> <!-- mainPage -->
+    <div class="header">Warehouse Dashboard</div> <!-- header -->
+    <div class="tile-container"> <!-- tile-container -->
+      <div class="tile-row"> <!-- tile-row -->
+        <div class="tile" onclick="navigate('mzLevels')"> <!-- tile -->
           <h3>MZ</h3>
-          <div class="gauges horizontal">
+          <div class="gauges horizontal"> <!-- gauges horizontal -->
             <div><div class="metrics">Picking Perf: 78%</div><canvas id="mzPick"></canvas></div>
             <div><div class="metrics">Stocking Perf: 91%</div><canvas id="mzStock"></canvas></div>
-          </div>
+          </div> <!-- gauges horizontal -->
           <div class="metrics">Current Wave: 1</div>
-          <div class="progress-bar"><div class="progress-fill" style="width: 60%"></div></div>
+          <div class="progress-bar"> <!-- progress-bar -->
+            <div class="progress-fill" style="width: 60%"></div> <!-- progress-fill -->
+          </div> <!-- progress-bar -->
           <div class="metrics">60%</div>
           <div class="metrics">Expected: 1500</div>
           <div class="metrics">Stocked: 1350</div>
           <div class="metrics">Pieces Left: 150</div>
-        </div>
-
-        <div class="tile" onclick="navigate('cfLevels')">
+        </div> <!-- tile -->
+        <div class="tile" onclick="navigate('cfLevels')"> <!-- tile -->
           <h3>CF</h3>
           <div class="gauges horizontal">
             <div><div class="metrics">Picking Perf: 80%</div><canvas id="cfPick"></canvas></div>
             <div><div class="metrics">Stocking Perf: 88%</div><canvas id="cfStock"></canvas></div>
           </div>
           <div class="metrics">Current Wave: 2</div>
-          <div class="progress-bar"><div class="progress-fill" style="width: 72%"></div></div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 72%"></div>
+          </div>
           <div class="metrics">72%</div>
           <div class="metrics">Expected: 1400</div>
           <div class="metrics">Stocked: 1010</div>
           <div class="metrics">Pieces Left: 390</div>
-        </div>
-
-        <div class="tile" onclick="navigate('hbLevels')">
+        </div> <!-- tile -->
+        <div class="tile" onclick="navigate('hbLevels')"> <!-- tile -->
           <h3>HB</h3>
           <div class="gauges horizontal">
             <div><div class="metrics">Picking Perf: 65%</div><canvas id="hbPick"></canvas></div>
             <div><div class="metrics">Stocking Perf: 79%</div><canvas id="hbStock"></canvas></div>
           </div>
           <div class="metrics">Current Wave: 3</div>
-          <div class="progress-bar"><div class="progress-fill" style="width: 50%"></div></div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 50%"></div>
+          </div>
           <div class="metrics">50%</div>
           <div class="metrics">Expected: 1600</div>
           <div class="metrics">Stocked: 800</div>
           <div class="metrics">Pieces Left: 800</div>
-        </div>
-      </div>
-
-      <div class="tile-row">
-        <div class="tile" onclick="navigate('ncLevels')">
+        </div> <!-- tile -->
+      </div> <!-- tile-row -->
+      <div class="tile-row"> <!-- tile-row -->
+        <div class="tile" onclick="navigate('ncLevels')"> <!-- tile -->
           <h3>NC</h3>
           <div class="gauges horizontal">
             <div><div class="metrics">Picking Perf: 90%</div><canvas id="ncPick"></canvas></div>
             <div><div class="metrics">Stocking Perf: 94%</div><canvas id="ncStock"></canvas></div>
           </div>
           <div class="metrics">Current Wave: 4</div>
-          <div class="progress-bar"><div class="progress-fill" style="width: 84%"></div></div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 84%"></div>
+          </div>
           <div class="metrics">84%</div>
           <div class="metrics">Expected: 1900</div>
           <div class="metrics">Stocked: 1800</div>
           <div class="metrics">Pieces Left: 100</div>
-        </div>
-
-        <div class="tile" onclick="navigate('rrLevels')">
+        </div> <!-- tile -->
+        <div class="tile" onclick="navigate('rrLevels')"> <!-- tile -->
           <h3>RR</h3>
           <div class="gauges horizontal">
             <div><div class="metrics">Picking Perf: 72%</div><canvas id="rrPick"></canvas></div>
             <div><div class="metrics">Stocking Perf: 85%</div><canvas id="rrStock"></canvas></div>
           </div>
           <div class="metrics">Current Wave: 5</div>
-          <div class="progress-bar"><div class="progress-fill" style="width: 68%"></div></div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 68%"></div>
+          </div>
           <div class="metrics">68%</div>
           <div class="metrics">Expected: 1750</div>
           <div class="metrics">Stocked: 1190</div>
           <div class="metrics">Pieces Left: 560</div>
-        </div>
-
-        <div class="tile" onclick="navigate('shipLevels')">
+        </div> <!-- tile -->
+        <div class="tile" onclick="navigate('shipLevels')"> <!-- tile -->
           <h3>Shipping</h3>
           <div class="gauges horizontal">
             <div><div class="metrics">Picking Perf: 96%</div><canvas id="shipPick"></canvas></div>
             <div><div class="metrics">Stocking Perf: 98%</div><canvas id="shipStock"></canvas></div>
           </div>
           <div class="metrics">Current Wave: 6</div>
-          <div class="progress-bar"><div class="progress-fill" style="width: 92%"></div></div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 92%"></div>
+          </div>
           <div class="metrics">92%</div>
           <div class="metrics">Expected: 2100</div>
           <div class="metrics">Stocked: 2050</div>
           <div class="metrics">Pieces Left: 50</div>
-        </div>
-      </div>
-    </div>
-  </div>
+        </div> <!-- tile -->
+      </div> <!-- tile-row -->
+    </div> <!-- tile-container -->
+  </div> <!-- mainPage -->
 
-  <!-- MZ Levels Page -->
-  <div id="mzLevels" class="page">
-    <div class="header">MZ Levels <button onclick="navigate('mainPage')">Home</button></div>
-    <div class="levels-container-vertical">
-      
-      <!-- MZ Level 1 -->
+  <div id="mzLevels" class="page"> <!-- mzLevels -->
+    <div class="header">MZ Levels <button onclick="navigate('mainPage')">Home</button></div> <!-- header -->
+    <div class="levels-container-vertical"> <!-- levels-container-vertical -->
       <div class="level-tile"> <!-- level-tile -->
         <div class="status-dot status-yellow"></div> <!-- status-dot -->
         <h3>MZ Level 1</h3>
         <div class="level-sections"> <!-- level-sections -->
-
           <div class="section picking"> <!-- section picking -->
             <div class="section-left"> <!-- section-left -->
               <div class="gauges"> <!-- gauges -->
@@ -132,7 +134,6 @@
               </div> <!-- performance -->
             </div> <!-- section-right -->
           </div> <!-- section picking -->
-
           <div class="section stocking"> <!-- section stocking -->
             <div class="section-left"> <!-- section-left -->
               <div class="metrics-group"> <!-- metrics-group -->
@@ -151,210 +152,7 @@
           </div> <!-- section stocking -->
         </div> <!-- level-sections -->
       </div> <!-- level-tile -->
-      
-      <!-- MZ Level 2-->
-        <div class="level-tile">
-        <div class="status-dot status-yellow"></div>
-        <h3>MZ Level 2</h3>
-        <div class="level-sections"> <!-- level-sections -->
-          <div class="section picking">
-            <div class="section-left">
-              <div class="gauges">
-                <strong>Picking</strong>
-                <canvas id="mzL2Pick"></canvas>
-                <div class="metrics">80%</div>
-              </div>
-            </div>
-            <div class="section-right">
-              <div class="performance">
-                <div class="metrics">Current Wave: 2</div>
-                <div class="metrics">Progress: 6%</div>
-                <div class="progress-bar">
-                  <div class="progress-fill" style="width: 75%"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="section stocking">
-            <div class="performance">
-              <div class="metrics-group">
-                <div class="metrics">89%</div>
-                <div class="metrics">Expected: 800</div>
-                <div class="metrics">Stocked: 700</div>
-                <div class="metrics">Remaining: 100</div>
-              </div>
-            </div>
-            <div class="gauges">
-              <canvas id="mzL2Stock"></canvas>
-              <strong>Stocking</strong>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div> <!-- level-tile -->
-      <!-- MZ Level 3-->
-      <div class="level-tile">
-        <div class="status-dot status-yellow"></div>
-        <h3>MZ Level 3</h3>
-        <div class="level-sections"> <!-- level-sections -->
-          
-          <div class="section picking">
-            <div class="section-left">
-              <div class="gauges">
-                <strong>Picking</strong>
-                <canvas id="mzL2Pick"></canvas>
-                <div class="metrics">80%</div>
-              </div>
-            </div>
-            <div class="section-right">
-              <div class="performance">
-                <div class="metrics">Current Wave: 2</div>
-                <div class="metrics">Progress: 15%</div>
-                <div class="progress-bar">
-                  <div class="progress-fill" style="width: 75%"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="section stocking">
-            <div class="performance">
-              <div class="metrics-group">
-                <div class="metrics">89%</div>
-                <div class="metrics">Expected: 800</div>
-                <div class="metrics">Stocked: 700</div>
-                <div class="metrics">Remaining: 100</div>
-              </div>
-            </div>
-            <div class="gauges">
-              <canvas id="mzL3Stock"></canvas>
-              <strong>Stocking</strong>
-            </div>
-          </div>
-        </div>
-        
-      </div>
-    </div>
-  
-  </div>
-</div>
-</div>
-
-  <!-- Placeholder Pages -->
-  <div id="cfLevels" class="page">
-    <div class="header">CF Levels <button onclick="navigate('mainPage')">Home</button></div>
-          <!-- CF Level 1-->
-      <div class="level-tile">
-        <div class="status-dot status-yellow"></div>
-        <h3>CF Level 1</h3>
-        <div class="level-sections">
-          <div class="section picking">
-            <div class="gauges">
-              <strong>Picking</strong>
-              <canvas id="cfL1Pick"></canvas>
-              <div class="metrics">80%</div>
-            </div>
-            <div class="performance">
-              <div class="metrics">Current Wave: 1</div>
-              <div class="metrics">Progress: 75%</div>
-            </div>
-          </div>
-          <div class="section stocking">
-            <div class="performance">
-              <div class="metrics-group">
-                <div class="metrics">89%</div>
-                <div class="metrics">Expected: 800</div>
-                <div class="metrics">Stocked: 700</div>
-                <div class="metrics">Remaining: 100</div>
-              </div>
-            </div>
-            <div class="gauges">
-              <canvas id="cfL1Stock"></canvas>
-              <strong>Stocking</strong>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- CF Level 2-->
-        <div class="level-tile">
-        <div class="status-dot status-yellow"></div>
-        <h3>CF Level 2</h3>
-        <div class="level-sections">
-          <div class="section picking">
-            <div class="gauges">
-              <strong>Picking</strong>
-              <canvas id="cfL2Pick"></canvas>
-              <div class="metrics">60%</div>
-            </div>
-            <div class="performance">
-              <div class="metrics">Current Wave: </div>
-              <div class="metrics">Progress: 7%</div>
-            </div>
-          </div>
-          <div class="section stocking">
-            <div class="performance">
-              <div class="metrics-group">
-                <div class="metrics">89%</div>
-                <div class="metrics">Expected: 800</div>
-                <div class="metrics">Stocked: 700</div>
-                <div class="metrics">Remaining: 100</div>
-              </div>
-            </div>
-            <div class="gauges">
-              <canvas id="cfL2Stock"></canvas>
-              <strong>Stocking</strong>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- CF Level 3-->
-      <div class="level-tile">
-        <div class="status-dot status-yellow"></div>
-        <h3>CF Level 3</h3>
-        <div class="level-sections">
-          <div class="section picking">
-            <div class="gauges">
-              <strong>Picking</strong>
-              <canvas id="cfL3Pick"></canvas>
-              <div class="metrics">80%</div>
-            </div>
-            <div class="performance">
-              <div class="metrics">Current Wave: 2</div>
-              <div class="metrics">Progress: 15%</div>
-            </div>
-          </div>
-          <div class="section stocking">
-            <div class="performance">
-              <div class="metrics-group">
-                <div class="metrics">89%</div>
-                <div class="metrics">Expected: 800</div>
-                <div class="metrics">Stocked: 700</div>
-                <div class="metrics">Remaining: 100</div>
-              </div>
-            </div>
-            <div class="gauges">
-              <canvas id="cfL3Stock"></canvas>
-              <strong>Stocking</strong>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  </div>
-  <div id="hbLevels" class="page">
-    <div class="header">HB Levels <button onclick="navigate('mainPage')">Home</button></div>
-  </div>
-  <div id="ncLevels" class="page">
-    <div class="header">NC Levels <button onclick="navigate('mainPage')">Home</button></div>
-  </div>
-  <div id="rrLevels" class="page">
-    <div class="header">RR Levels <button onclick="navigate('mainPage')">Home</button></div>
-  </div>
-  <div id="shipLevels" class="page">
-    <div class="header">Shipping Levels <button onclick="navigate('mainPage')">Home</button></div>
-  </div>
+    </div> <!-- levels-container-vertical -->
+  </div> <!-- mzLevels -->
 </body>
 </html>
