@@ -58,8 +58,8 @@ body {
   border-radius: 10px;
   overflow: hidden;
   height: 10px;
-  width: 90%;
-  margin: 6px auto;
+  width: 100%;
+  margin: 6px 0;
 }
 
 .progress-fill {
@@ -154,6 +154,13 @@ body {
   justify-content: center;
   align-items: flex-start;
   text-align: left;
+  width: 100%;
+}
+
+.section.picking .section-right .performance .progress-bar {
+  margin-top: 6px;
+  margin-bottom: 6px;
+  width: 100%;
 }
 
 .section.stocking .section-left .metrics-group {
