@@ -123,38 +123,52 @@ body {
   gap: 20px;
 }
 
-.section.picking .gauges,
-.section.stocking .gauges {
-  flex-shrink: 0;
-}
-
 .section.picking {
   flex-direction: row;
   border-right: 2px solid #ccc;
   padding-right: 15px;
+  justify-content: flex-start;
 }
 
 .section.stocking {
-  flex-direction: row-reverse;
+  flex-direction: row;
   padding-left: 15px;
+  justify-content: flex-end;
 }
 
-.performance {
+.section.picking .gauges,
+.section.stocking .gauges {
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
-  flex: 1;
+  min-width: 100px;
 }
 
+.performance,
 .metrics-group {
   display: flex;
   flex-direction: column;
   justify-content: center;
   flex: 1;
+}
+
+.performance {
   align-items: flex-start;
+  text-align: left;
+}
+
+.metrics-group {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.section.stocking .gauges {
+  order: 2;
+  margin-left: 10px;
 }
 
 .section.stocking .metrics-group {
-  align-items: flex-end;
-  text-align: right;
+  order: 1;
+  margin-right: 10px;
 }
