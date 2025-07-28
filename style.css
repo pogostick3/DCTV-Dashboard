@@ -123,43 +123,45 @@ body {
   gap: 20px;
 }
 
-.section.picking .gauges {
-  order: 1;
-}
-
-.section.picking .performance {
-  order: 2;
-  flex: 1;
+.section-left,
+.section-right {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
-}
-
-.section.stocking .metrics-group {
-  order: 1;
+  align-items: center;
+  gap: 15px;
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  text-align: right;
 }
 
-.section.stocking .gauges {
-  order: 2;
+.section-left {
+  justify-content: flex-start;
 }
 
-.section .gauges {
+.section-right {
+  justify-content: flex-end;
+}
+
+.section.picking .section-left .gauges,
+.section.stocking .section-right .gauges {
+  min-width: 100px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-width: 100px;
 }
 
-.section .performance,
-.section .metrics-group {
+.section.picking .section-right .performance {
+  display: flex;
+  flex-direction: column;
   justify-content: center;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.section.stocking .section-left .metrics-group {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-end;
+  text-align: right;
 }
 
 .progress-bar {
