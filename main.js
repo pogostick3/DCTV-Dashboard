@@ -1,5 +1,9 @@
-// main.js - Full dashboard logic with global variable usage for all departments
+// Register Chart.js plugin if needed
+if (window.ChartDataLabels) {
+  Chart.register(ChartDataLabels);
+}
 
+// Global Data
 const dashboardData = {
   mz: {
     levels: {
@@ -31,80 +35,43 @@ const dashboardData = {
   },
   cf: {
     levels: {
-      1: {
-        picking: { perf: 76, wave: 1, progress: 65 },
-        stocking: { perf: 84, expected: 780, stocked: 690, remaining: 90 },
-      },
-      2: {
-        picking: { perf: 82, wave: 2, progress: 55 },
-        stocking: { perf: 87, expected: 730, stocked: 650, remaining: 80 },
-      },
-      3: {
-        picking: { perf: 79, wave: 3, progress: 49 },
-        stocking: { perf: 90, expected: 860, stocked: 800, remaining: 60 },
-      },
+      1: { picking: { perf: 76, wave: 1, progress: 65 }, stocking: { perf: 84, expected: 780, stocked: 690, remaining: 90 } },
+      2: { picking: { perf: 82, wave: 2, progress: 55 }, stocking: { perf: 87, expected: 730, stocked: 650, remaining: 80 } },
+      3: { picking: { perf: 79, wave: 3, progress: 49 }, stocking: { perf: 90, expected: 860, stocked: 800, remaining: 60 } },
     },
   },
   hb: {
     levels: {
-      1: {
-        picking: { perf: 65, wave: 3, progress: 35 },
-        stocking: { perf: 79, expected: 890, stocked: 705, remaining: 185 },
-      },
-      2: {
-        picking: { perf: 72, wave: 4, progress: 42 },
-        stocking: { perf: 81, expected: 910, stocked: 740, remaining: 170 },
-      },
-      3: {
-        picking: { perf: 77, wave: 5, progress: 56 },
-        stocking: { perf: 83, expected: 940, stocked: 780, remaining: 160 },
-      },
+      1: { picking: { perf: 65, wave: 3, progress: 35 }, stocking: { perf: 79, expected: 890, stocked: 705, remaining: 185 } },
+      2: { picking: { perf: 72, wave: 4, progress: 42 }, stocking: { perf: 81, expected: 910, stocked: 740, remaining: 170 } },
+      3: { picking: { perf: 77, wave: 5, progress: 56 }, stocking: { perf: 83, expected: 940, stocked: 780, remaining: 160 } },
     },
   },
   rr: {
     levels: {
-      1: {
-        picking: { perf: 72, wave: 5, progress: 60 },
-        stocking: { perf: 85, expected: 970, stocked: 820, remaining: 150 },
-      },
-      2: {
-        picking: { perf: 78, wave: 6, progress: 70 },
-        stocking: { perf: 88, expected: 990, stocked: 850, remaining: 140 },
-      },
+      1: { picking: { perf: 72, wave: 5, progress: 60 }, stocking: { perf: 85, expected: 970, stocked: 820, remaining: 150 } },
+      2: { picking: { perf: 78, wave: 6, progress: 70 }, stocking: { perf: 88, expected: 990, stocked: 850, remaining: 140 } },
     },
   },
   nc: {
     levels: {
-      oil: {
-        picking: { perf: 88, wave: 2, progress: 68 },
-        stocking: { perf: 90, expected: 1100, stocked: 980, remaining: 120 },
-      },
-      pbs: {
-        picking: { perf: 85, wave: 3, progress: 62 },
-        stocking: { perf: 87, expected: 1000, stocked: 890, remaining: 110 },
-      },
-      highPick: {
-        picking: { perf: 91, wave: 4, progress: 76 },
-        stocking: { perf: 93, expected: 1080, stocked: 960, remaining: 120 },
-      },
-      ncrr: {
-        picking: { perf: 86, wave: 5, progress: 74 },
-        stocking: { perf: 89, expected: 1020, stocked: 920, remaining: 100 },
-      },
+      oil: { picking: { perf: 88, wave: 2, progress: 68 }, stocking: { perf: 90, expected: 1100, stocked: 980, remaining: 120 } },
+      pbs: { picking: { perf: 85, wave: 3, progress: 62 }, stocking: { perf: 87, expected: 1000, stocked: 890, remaining: 110 } },
+      highPick: { picking: { perf: 91, wave: 4, progress: 76 }, stocking: { perf: 93, expected: 1080, stocked: 960, remaining: 120 } },
+      ncrr: { picking: { perf: 86, wave: 5, progress: 74 }, stocking: { perf: 89, expected: 1020, stocked: 920, remaining: 100 } },
     },
   },
 };
 
-
-
-// Utility Function to Populate Text and Gauge
+// Utility Function to Populate Text and Gauges
 function updateGaugeAndText(idPrefix, data) {
-  if (data.perf !== undefined) {
-    const gaugeEl = document.getElementById(`${idPrefix}-gauge`);
-    const textEl = document.getElementById(`${idPrefix}-text`);
-    if (gaugeEl) renderGauge(gaugeEl, data.perf);
+  const gaugeEl = document.getElementById(idPrefix);
+  const textEl = document.getElementById(`${idPrefix}-text`);
+  if (gaugeEl && data.perf !== undefined) {
+    renderGauge(gaugeEl, data.perf);
     if (textEl) textEl.textContent = `${data.perf}%`;
   }
+
   if (data.wave !== undefined) {
     const waveEl = document.getElementById(`${idPrefix}-wave`);
     if (waveEl) waveEl.textContent = `Current Wave: ${data.wave}`;
@@ -156,16 +123,17 @@ function populateDashboard() {
 
 // Render Gauge Function
 function renderGauge(canvas, value) {
+  if (!canvas) return;
+  console.log(`Rendering gauge on #${canvas.id} with value ${value}`);
+
   new Chart(canvas, {
     type: 'doughnut',
     data: {
-      datasets: [
-        {
-          data: [value, 100 - value],
-          backgroundColor: ['#4caf50', '#e0e0e0'],
-          borderWidth: 0,
-        },
-      ],
+      datasets: [{
+        data: [value, 100 - value],
+        backgroundColor: ['#4caf50', '#e0e0e0'],
+        borderWidth: 0,
+      }]
     },
     options: {
       rotation: -90,
@@ -175,8 +143,8 @@ function renderGauge(canvas, value) {
         legend: { display: false },
         tooltip: { enabled: false },
         datalabels: { display: false },
-      },
-    },
+      }
+    }
   });
 }
 
@@ -188,4 +156,3 @@ function navigate(pageId) {
 
 // Initialize Dashboard on DOM Ready
 window.addEventListener('DOMContentLoaded', populateDashboard);
-
