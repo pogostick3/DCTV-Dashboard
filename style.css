@@ -126,6 +126,7 @@ body {
   justify-content: space-between;
   gap: 30px;
   flex-wrap: wrap;
+  position: relative;
 }
 
 .sub-section {
@@ -156,8 +157,23 @@ body {
 
 .divider {
   width: 2px;
-  height: 100%;
+  height: 60%;
   background-color: #ccc;
+}
+
+.divider.picking {
+  background-color: orange;
+}
+
+.divider.stocking {
+  background-color: #4caf50;
+}
+
+.subsection-separator {
+  width: 2px;
+  height: 100%;
+  background-color: #999;
+  align-self: stretch;
 }
 
 canvas {
