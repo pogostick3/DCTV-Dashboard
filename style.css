@@ -121,14 +121,19 @@ body {
 
 .dual-section {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  justify-content: space-between;
   gap: 30px;
+  flex-wrap: wrap;
 }
 
 .sub-section {
   display: flex;
-  justify-content: space-between;
+  flex-direction: row;
   align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  min-width: 400px;
   gap: 20px;
 }
 
@@ -142,7 +147,7 @@ body {
 
 .divider {
   width: 2px;
-  height: 100px;
+  height: 100%;
   background-color: #ccc;
 }
 
