@@ -9,7 +9,6 @@ function navigate(pageId) {
   }
 }
 
-
 function createGauge(id, value, color) {
   const canvas = document.getElementById(id);
   if (!canvas) return;
@@ -44,7 +43,6 @@ function createGauge(id, value, color) {
   canvas.chartInstance = chart;
 }
 
-
 function loadGauges() {
   const gauges = [
     ['mzPick', 78], ['mzStock', 91],
@@ -59,11 +57,10 @@ function loadGauges() {
   ];
 
   gauges.forEach(([id, val]) =>
-    createGauge(id, val, val > 85 ? '#5cb85c' : '#f39c12')
+    createGauge(id, val, val > 85 ? '#4caf50' : 'orange')
   );
 }
 
 window.onload = () => {
   loadGauges();
 };
-
