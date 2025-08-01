@@ -63,8 +63,6 @@ const dashboardData = {
   },
 };
 
-
-
 // Utility Function to Populate Text and Gauges
 function updateGaugeAndText(idPrefix, data) {
   const gaugeEl = document.getElementById(idPrefix);
@@ -110,33 +108,21 @@ function populateDashboard() {
     for (const lvlKey in levels) {
       const level = levels[lvlKey];
 
-      // Render to main dashboard (first level only)
-      if (isFirstLevel) {
-        updateGaugeAndText(`${deptKey}Pick`, level.picking);
-        updateGaugeAndText(`${deptKey}Stock`, level.stocking);
-        updateTextOnly(`${deptKey}`, level);
-        isFirstLevel = false;
-      }
-
-      // Level Pages
-      const lvlPickCanvas = document.querySelector(`#${deptKey}${lvlKey}-picking`);
-      const lvlStockCanvas = document.querySelector(`#${deptKey}${lvlKey}-stocking`);
-
-      if (lvlPickCanvas) {
+      if (document.getElementById('main-dashboard')) {
+        if (isFirstLevel) {
+          updateGaugeAndText(`${deptKey}Pick`, level.picking);
+          updateGaugeAndText(`${deptKey}Stock`, level.stocking);
+          updateTextOnly(`${deptKey}`, level);
+          isFirstLevel = false;
+        }
+      } else if (document.getElementById('levels-page')) {
         updateGaugeAndText(`${deptKey}${lvlKey}-picking`, level.picking);
-      }
-      if (lvlStockCanvas) {
         updateGaugeAndText(`${deptKey}${lvlKey}-stocking`, level.stocking);
-      }
-
-      // Zones
-      if (level.zones) {
-        for (const zKey in level.zones) {
-          const zone = level.zones[zKey];
-          if (document.getElementById(`z${zKey}-pick`)) {
+      } else if (document.getElementById('zones-page')) {
+        if (level.zones) {
+          for (const zKey in level.zones) {
+            const zone = level.zones[zKey];
             updateGaugeAndText(`z${zKey}-pick`, zone.picking);
-          }
-          if (document.getElementById(`z${zKey}-stock`)) {
             updateGaugeAndText(`z${zKey}-stock`, zone.stocking);
           }
         }
@@ -202,4 +188,3 @@ function navigate(pageId) {
 
 // Initialize Dashboard on DOM Ready
 window.addEventListener('DOMContentLoaded', populateDashboard);
-
