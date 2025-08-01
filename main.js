@@ -12,11 +12,8 @@ function navigate(pageId) {
 function createGauge(id, value, color) {
   const canvas = document.getElementById(id);
   if (!canvas) return;
-
   const ctx = canvas.getContext('2d');
-  if (canvas.chartInstance) {
-    canvas.chartInstance.destroy();
-  }
+  if (canvas.chartInstance) canvas.chartInstance.destroy();
 
   const chart = new Chart(ctx, {
     type: 'doughnut',
@@ -35,15 +32,7 @@ function createGauge(id, value, color) {
         legend: { display: false },
         tooltip: { enabled: false },
         datalabels: {
-          display: true,
-          formatter: () => `${value}%`,
-          color: '#000',
-          font: {
-            weight: 'bold',
-            size: 16
-          },
-          anchor: 'center',
-          align: 'center'
+          display: false  // ✅ Disable Chart.js plugin labels to prevent overlap
         }
       }
     },
@@ -55,7 +44,6 @@ function createGauge(id, value, color) {
 
 function loadGauges() {
   const gaugeData = [
-    // Main
     ['mzPick', 78], ['mzStock', 91],
     ['cfPick', 80], ['cfStock', 88],
     ['hbPick', 65], ['hbStock', 79],
@@ -63,12 +51,10 @@ function loadGauges() {
     ['rrPick', 72], ['rrStock', 85],
     ['shipPick', 96], ['shipStock', 98],
 
-    // MZ Levels
     ['mz1-picking-gauge', 80], ['mz1-stocking-gauge', 89],
     ['mz2-picking-gauge', 85], ['mz2-stocking-gauge', 93],
     ['mz3-picking-gauge', 70], ['mz3-stocking-gauge', 80],
 
-    // Zones
     ['z10-picking-gauge', 83], ['z10-stocking-gauge', 88],
     ['z11-picking-gauge', 67], ['z11-stocking-gauge', 75],
     ['z20-picking-gauge', 81], ['z20-stocking-gauge', 86],
