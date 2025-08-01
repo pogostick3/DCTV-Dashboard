@@ -68,6 +68,7 @@ function updateGaugeAndText(idPrefix, data) {
   const gaugeEl = document.getElementById(idPrefix);
   const textEl = document.getElementById(`${idPrefix}-text`);
   if (gaugeEl && data.perf !== undefined) {
+    console.log(`Rendering gauge for ${idPrefix} (${data.perf}%)`);
     renderGauge(gaugeEl, data.perf);
     if (textEl) textEl.textContent = `${data.perf}%`;
   }
@@ -102,14 +103,24 @@ function populateDashboard() {
     const dept = dashboardData[deptKey];
     const levels = dept.levels;
 
+    let isFirstLevel = true;
+
     for (const lvlKey in levels) {
       const level = levels[lvlKey];
 
-      // Level Picking/Stocking
+      // Render to main dashboard (first level only)
+      if (isFirstLevel) {
+        updateGaugeAndText(`${deptKey}Pick`, level.picking);
+        updateGaugeAndText(`${deptKey}Stock`, level.stocking);
+        updateTextOnly(`${deptKey}`, level);
+        isFirstLevel = false;
+      }
+
+      // Level Pages
       updateGaugeAndText(`${deptKey}${lvlKey}-picking`, level.picking);
       updateGaugeAndText(`${deptKey}${lvlKey}-stocking`, level.stocking);
 
-      // Zones (if any)
+      // Zones
       if (level.zones) {
         for (const zKey in level.zones) {
           const zone = level.zones[zKey];
@@ -121,11 +132,26 @@ function populateDashboard() {
   }
 }
 
+// Utility for adding non-gauge text on main dashboard
+function updateTextOnly(prefix, level) {
+  const wave = document.querySelector(`[data-id='${prefix}Wave']`);
+  const progress = document.querySelector(`[data-id='${prefix}Progress']`);
+  const progressText = document.querySelector(`[data-id='${prefix}ProgressText']`);
+  const expected = document.querySelector(`[data-id='${prefix}Expected']`);
+  const stocked = document.querySelector(`[data-id='${prefix}Stocked']`);
+  const left = document.querySelector(`[data-id='${prefix}Left']`);
+
+  if (wave) wave.textContent = `Current Wave: ${level.picking?.wave ?? ''}`;
+  if (progress) progress.style.width = `${level.picking?.progress ?? 0}%`;
+  if (progressText) progressText.textContent = `Progress: ${level.picking?.progress ?? 0}%`;
+  if (expected) expected.textContent = `${level.stocking?.expected ?? ''}`;
+  if (stocked) stocked.textContent = `${level.stocking?.stocked ?? ''}`;
+  if (left) left.textContent = `${level.stocking?.remaining ?? ''}`;
+}
+
 // Render Gauge Function
 function renderGauge(canvas, value) {
   if (!canvas) return;
-  console.log(`Rendering gauge on #${canvas.id} with value ${value}`);
-
   new Chart(canvas, {
     type: 'doughnut',
     data: {
