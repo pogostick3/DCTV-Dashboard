@@ -4,10 +4,15 @@ function navigate(pageId) {
   if (page) {
     page.classList.add('active');
     setTimeout(() => {
-      loadGauges(); // redraw main page gauges
+      loadGauges(); // redraw all gauges
+
       if (pageId === 'mzLevels') {
         drawGauge('mz1-picking-gauge', 80, 'orange');
         drawGauge('mz1-stocking-gauge', 89, '#4caf50');
+        drawGauge('mz2-picking-gauge', 85, 'orange');
+        drawGauge('mz2-stocking-gauge', 93, '#4caf50');
+        drawGauge('mz3-picking-gauge', 70, 'orange');
+        drawGauge('mz3-stocking-gauge', 80, '#4caf50');
       }
     }, 100);
   }
@@ -19,7 +24,6 @@ function createGauge(id, value, color) {
 
   const ctx = canvas.getContext('2d');
 
-  // Clear previous chart if it exists
   if (canvas.chartInstance) {
     canvas.chartInstance.destroy();
   }
@@ -60,11 +64,10 @@ function loadGauges() {
     ['mz3-picking-gauge', 70], ['mz3-stocking-gauge', 80]
   ];
 
-  gauges.forEach(([id, val]) =>
-    createGauge(id, val, val > 85 ? '#5cb85c' : '#f39c12')
-  );
+  gauges.forEach(([id, val]) => {
+    createGauge(id, val, val > 85 ? '#4caf50' : 'orange');
+  });
 }
-
 
 function drawGauge(canvasId, percentage, color) {
   const canvas = document.getElementById(canvasId);
@@ -95,9 +98,13 @@ function drawGauge(canvasId, percentage, color) {
 window.onload = () => {
   loadGauges();
 
-  // Also preload gauges for mzLevels if it's already active (e.g., direct URL)
+  // Initialize MZ gauges if already on that page
   if (document.getElementById('mzLevels')?.classList.contains('active')) {
     drawGauge('mz1-picking-gauge', 80, 'orange');
     drawGauge('mz1-stocking-gauge', 89, '#4caf50');
+    drawGauge('mz2-picking-gauge', 85, 'orange');
+    drawGauge('mz2-stocking-gauge', 93, '#4caf50');
+    drawGauge('mz3-picking-gauge', 70, 'orange');
+    drawGauge('mz3-stocking-gauge', 80, '#4caf50');
   }
 };
