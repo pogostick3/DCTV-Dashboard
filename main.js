@@ -1,55 +1,23 @@
-// main.js
-
 function navigate(pageId) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const page = document.getElementById(pageId);
   if (page) {
     page.classList.add('active');
-
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        loadGauges();
-
-        if (pageId === 'mzLevels') {
-          drawGauge('mz1-picking-gauge', 80, 'orange');
-          drawGauge('mz1-stocking-gauge', 89, '#4caf50');
-          drawGauge('mz2-picking-gauge', 85, 'orange');
-          drawGauge('mz2-stocking-gauge', 93, '#4caf50');
-          drawGauge('mz3-picking-gauge', 70, 'orange');
-          drawGauge('mz3-stocking-gauge', 80, '#4caf50');
-        }
-
-        if (pageId === 'mzLevel1') {
-          drawGauge('z10-picking-gauge', 83, 'orange');
-          drawGauge('z10-stocking-gauge', 88, '#4caf50');
-          drawGauge('z11-picking-gauge', 67, 'orange');
-          drawGauge('z11-stocking-gauge', 75, '#4caf50');
-        }
-
-        if (pageId === 'mzLevel2') {
-          drawGauge('z20-picking-gauge', 81, 'orange');
-          drawGauge('z20-stocking-gauge', 86, '#4caf50');
-          drawGauge('z21-picking-gauge', 58, 'orange');
-          drawGauge('z21-stocking-gauge', 63, '#4caf50');
-        }
-
-        if (pageId === 'mzLevel3') {
-          drawGauge('z30-picking-gauge', 77, 'orange');
-          drawGauge('z30-stocking-gauge', 81, '#4caf50');
-          drawGauge('z31-picking-gauge', 92, '#4caf50');
-          drawGauge('z31-stocking-gauge', 95, '#4caf50');
-        }
-
-      }, 50); // slight delay to ensure DOM is fully ready
-    });
+    setTimeout(() => {
+      loadGauges();
+    }, 100);
   }
 }
 
 function createGauge(id, value, color) {
   const canvas = document.getElementById(id);
   if (!canvas) return;
+
   const ctx = canvas.getContext('2d');
-  if (canvas.chartInstance) canvas.chartInstance.destroy();
+  if (canvas.chartInstance) {
+    canvas.chartInstance.destroy();
+  }
+
   const chart = new Chart(ctx, {
     type: 'doughnut',
     data: {
@@ -65,16 +33,29 @@ function createGauge(id, value, color) {
       cutout: '70%',
       plugins: {
         legend: { display: false },
-        tooltip: { enabled: false }
+        tooltip: { enabled: false },
+        datalabels: {
+          display: true,
+          formatter: () => `${value}%`,
+          color: '#000',
+          font: {
+            weight: 'bold',
+            size: 16
+          },
+          anchor: 'center',
+          align: 'center'
+        }
       }
-    }
+    },
+    plugins: [ChartDataLabels]
   });
+
   canvas.chartInstance = chart;
 }
 
 function loadGauges() {
   const gaugeData = [
-    // Main page
+    // Main
     ['mzPick', 78], ['mzStock', 91],
     ['cfPick', 80], ['cfStock', 88],
     ['hbPick', 65], ['hbStock', 79],
@@ -87,7 +68,7 @@ function loadGauges() {
     ['mz2-picking-gauge', 85], ['mz2-stocking-gauge', 93],
     ['mz3-picking-gauge', 70], ['mz3-stocking-gauge', 80],
 
-    // MZ Zones
+    // Zones
     ['z10-picking-gauge', 83], ['z10-stocking-gauge', 88],
     ['z11-picking-gauge', 67], ['z11-stocking-gauge', 75],
     ['z20-picking-gauge', 81], ['z20-stocking-gauge', 86],
@@ -100,30 +81,6 @@ function loadGauges() {
     const color = value >= 85 ? '#5cb85c' : value >= 70 ? '#f39c12' : '#d9534f';
     createGauge(id, value, color);
   });
-}
-
-function drawGauge(canvasId, percentage, color) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-  const radius = canvas.width / 2;
-  const startAngle = Math.PI;
-  const endAngle = Math.PI + Math.PI * (percentage / 100);
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Background arc
-  ctx.beginPath();
-  ctx.arc(radius, radius, radius - 10, Math.PI, 2 * Math.PI);
-  ctx.strokeStyle = "#e6e6e6";
-  ctx.lineWidth = 15;
-  ctx.stroke();
-
-  // Foreground arc
-  ctx.beginPath();
-  ctx.arc(radius, radius, radius - 10, startAngle, endAngle);
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 15;
-  ctx.stroke();
 }
 
 window.onload = () => {
