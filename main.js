@@ -54,13 +54,17 @@ function loadGauges() {
     ['hbPick', 65], ['hbStock', 79],
     ['ncPick', 90], ['ncStock', 94],
     ['rrPick', 72], ['rrStock', 85],
-    ['shipPick', 96], ['shipStock', 98]
+    ['shipPick', 96], ['shipStock', 98],
+    ['mz1-picking-gauge', 80], ['mz1-stocking-gauge', 89],
+    ['mz2-picking-gauge', 85], ['mz2-stocking-gauge', 93],
+    ['mz3-picking-gauge', 70], ['mz3-stocking-gauge', 80]
   ];
 
   gauges.forEach(([id, val]) =>
     createGauge(id, val, val > 85 ? '#5cb85c' : '#f39c12')
   );
 }
+
 
 function drawGauge(canvasId, percentage, color) {
   const canvas = document.getElementById(canvasId);
