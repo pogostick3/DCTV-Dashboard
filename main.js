@@ -4,7 +4,7 @@ function navigate(pageId) {
   if (page) {
     page.classList.add('active');
     setTimeout(() => {
-      loadGauges(); // Main dashboard gauges
+      loadGauges(); // redraw main page gauges
       if (pageId === 'mzLevels') {
         drawGauge('mz1-picking-gauge', 80, 'orange');
         drawGauge('mz1-stocking-gauge', 89, '#4caf50');
@@ -19,7 +19,7 @@ function createGauge(id, value, color) {
 
   const ctx = canvas.getContext('2d');
 
-  // Clear any previous chart
+  // Clear previous chart if it exists
   if (canvas.chartInstance) {
     canvas.chartInstance.destroy();
   }
@@ -65,19 +65,22 @@ function loadGauges() {
 function drawGauge(canvasId, percentage, color) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
+
   const ctx = canvas.getContext("2d");
-  const startAngle = Math.PI;
-  const endAngle = Math.PI * (1 + percentage / 100);
   const radius = canvas.width / 2;
+  const startAngle = Math.PI;
+  const endAngle = Math.PI + Math.PI * (percentage / 100);
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  // Background arc
   ctx.beginPath();
   ctx.arc(radius, radius, radius - 10, Math.PI, 2 * Math.PI);
   ctx.strokeStyle = "#e6e6e6";
   ctx.lineWidth = 15;
   ctx.stroke();
 
+  // Foreground arc
   ctx.beginPath();
   ctx.arc(radius, radius, radius - 10, startAngle, endAngle);
   ctx.strokeStyle = color;
@@ -87,4 +90,10 @@ function drawGauge(canvasId, percentage, color) {
 
 window.onload = () => {
   loadGauges();
+
+  // Also preload gauges for mzLevels if it's already active (e.g., direct URL)
+  if (document.getElementById('mzLevels')?.classList.contains('active')) {
+    drawGauge('mz1-picking-gauge', 80, 'orange');
+    drawGauge('mz1-stocking-gauge', 89, '#4caf50');
+  }
 };
