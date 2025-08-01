@@ -148,13 +148,21 @@ body {
   position: relative;
 }
 
-.sub-section .left,
+.sub-section .left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: left;
+  align-items: left;
+  gap: 10px;
+}
+
 .sub-section .right {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  justify-content: right;
+  align-items: right;
   gap: 10px;
 }
 
