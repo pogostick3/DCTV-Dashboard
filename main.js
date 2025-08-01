@@ -1,3 +1,38 @@
+const performanceData = {
+  mzPick: 78,
+  mzStock: 91,
+  cfPick: 80,
+  cfStock: 88,
+  hbPick: 65,
+  hbStock: 79,
+  ncPick: 90,
+  ncStock: 94,
+  rrPick: 72,
+  rrStock: 85,
+  shipPick: 96,
+  shipStock: 98,
+
+  mz1Pick: 80,
+  mz1Stock: 89,
+  mz2Pick: 85,
+  mz2Stock: 93,
+  mz3Pick: 70,
+  mz3Stock: 80,
+
+  z10Pick: 83,
+  z10Stock: 88,
+  z11Pick: 67,
+  z11Stock: 75,
+  z20Pick: 81,
+  z20Stock: 86,
+  z21Pick: 58,
+  z21Stock: 63,
+  z30Pick: 77,
+  z30Stock: 81,
+  z31Pick: 92,
+  z31Stock: 95
+};
+
 function navigate(pageId) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const page = document.getElementById(pageId);
@@ -32,7 +67,15 @@ function createGauge(id, value, color) {
         legend: { display: false },
         tooltip: { enabled: false },
         datalabels: {
-          display: false  // ✅ Disable Chart.js plugin labels to prevent overlap
+          display: true,
+          formatter: () => `${value}%`,
+          color: '#000',
+          font: {
+            weight: 'bold',
+            size: 16
+          },
+          anchor: 'center',
+          align: 'center'
         }
       }
     },
@@ -43,29 +86,15 @@ function createGauge(id, value, color) {
 }
 
 function loadGauges() {
-  const gaugeData = [
-    ['mzPick', 78], ['mzStock', 91],
-    ['cfPick', 80], ['cfStock', 88],
-    ['hbPick', 65], ['hbStock', 79],
-    ['ncPick', 90], ['ncStock', 94],
-    ['rrPick', 72], ['rrStock', 85],
-    ['shipPick', 96], ['shipStock', 98],
-
-    ['mz1-picking-gauge', 80], ['mz1-stocking-gauge', 89],
-    ['mz2-picking-gauge', 85], ['mz2-stocking-gauge', 93],
-    ['mz3-picking-gauge', 70], ['mz3-stocking-gauge', 80],
-
-    ['z10-picking-gauge', 83], ['z10-stocking-gauge', 88],
-    ['z11-picking-gauge', 67], ['z11-stocking-gauge', 75],
-    ['z20-picking-gauge', 81], ['z20-stocking-gauge', 86],
-    ['z21-picking-gauge', 58], ['z21-stocking-gauge', 63],
-    ['z30-picking-gauge', 77], ['z30-stocking-gauge', 81],
-    ['z31-picking-gauge', 92], ['z31-stocking-gauge', 95]
-  ];
-
-  gaugeData.forEach(([id, value]) => {
+  Object.entries(performanceData).forEach(([key, value]) => {
+    const gaugeId = `${key.replace(/([A-Z])/g, '-$1').toLowerCase()}-gauge`;
     const color = value >= 85 ? '#5cb85c' : value >= 70 ? '#f39c12' : '#d9534f';
-    createGauge(id, value, color);
+    createGauge(gaugeId, value, color);
+
+    const textElement = document.querySelector(`.metric-${key}`);
+    if (textElement) {
+      textElement.textContent = `${value}%`;
+    }
   });
 }
 
