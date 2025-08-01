@@ -5,40 +5,43 @@ function navigate(pageId) {
   const page = document.getElementById(pageId);
   if (page) {
     page.classList.add('active');
-    setTimeout(() => {
-      loadGauges();
 
-      if (pageId === 'mzLevels') {
-        drawGauge('mz1-picking-gauge', 80, 'orange');
-        drawGauge('mz1-stocking-gauge', 89, '#4caf50');
-        drawGauge('mz2-picking-gauge', 85, 'orange');
-        drawGauge('mz2-stocking-gauge', 93, '#4caf50');
-        drawGauge('mz3-picking-gauge', 70, 'orange');
-        drawGauge('mz3-stocking-gauge', 80, '#4caf50');
-      }
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        loadGauges();
 
-      if (pageId === 'mzLevel1') {
-        drawGauge('z10-picking-gauge', 83, 'orange');
-        drawGauge('z10-stocking-gauge', 88, '#4caf50');
-        drawGauge('z11-picking-gauge', 67, 'orange');
-        drawGauge('z11-stocking-gauge', 75, '#4caf50');
-      }
+        if (pageId === 'mzLevels') {
+          drawGauge('mz1-picking-gauge', 80, 'orange');
+          drawGauge('mz1-stocking-gauge', 89, '#4caf50');
+          drawGauge('mz2-picking-gauge', 85, 'orange');
+          drawGauge('mz2-stocking-gauge', 93, '#4caf50');
+          drawGauge('mz3-picking-gauge', 70, 'orange');
+          drawGauge('mz3-stocking-gauge', 80, '#4caf50');
+        }
 
-      if (pageId === 'mzLevel2') {
-        drawGauge('z20-picking-gauge', 81, 'orange');
-        drawGauge('z20-stocking-gauge', 86, '#4caf50');
-        drawGauge('z21-picking-gauge', 58, 'orange');
-        drawGauge('z21-stocking-gauge', 63, '#4caf50');
-      }
+        if (pageId === 'mzLevel1') {
+          drawGauge('z10-picking-gauge', 83, 'orange');
+          drawGauge('z10-stocking-gauge', 88, '#4caf50');
+          drawGauge('z11-picking-gauge', 67, 'orange');
+          drawGauge('z11-stocking-gauge', 75, '#4caf50');
+        }
 
-      if (pageId === 'mzLevel3') {
-        drawGauge('z30-picking-gauge', 77, 'orange');
-        drawGauge('z30-stocking-gauge', 81, '#4caf50');
-        drawGauge('z31-picking-gauge', 92, '#4caf50');
-        drawGauge('z31-stocking-gauge', 95, '#4caf50');
-      }
+        if (pageId === 'mzLevel2') {
+          drawGauge('z20-picking-gauge', 81, 'orange');
+          drawGauge('z20-stocking-gauge', 86, '#4caf50');
+          drawGauge('z21-picking-gauge', 58, 'orange');
+          drawGauge('z21-stocking-gauge', 63, '#4caf50');
+        }
 
-    }, 100);
+        if (pageId === 'mzLevel3') {
+          drawGauge('z30-picking-gauge', 77, 'orange');
+          drawGauge('z30-stocking-gauge', 81, '#4caf50');
+          drawGauge('z31-picking-gauge', 92, '#4caf50');
+          drawGauge('z31-stocking-gauge', 95, '#4caf50');
+        }
+
+      }, 50); // slight delay to ensure DOM is fully ready
+    });
   }
 }
 
