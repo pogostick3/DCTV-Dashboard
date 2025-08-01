@@ -63,6 +63,8 @@ const dashboardData = {
   },
 };
 
+
+
 // Utility Function to Populate Text and Gauges
 function updateGaugeAndText(idPrefix, data) {
   const gaugeEl = document.getElementById(idPrefix);
@@ -117,10 +119,13 @@ function populateDashboard() {
       }
 
       // Level Pages
-      if (document.getElementById(`${deptKey}${lvlKey}-picking`)) {
+      const lvlPickCanvas = document.querySelector(`#${deptKey}${lvlKey}-picking`);
+      const lvlStockCanvas = document.querySelector(`#${deptKey}${lvlKey}-stocking`);
+
+      if (lvlPickCanvas) {
         updateGaugeAndText(`${deptKey}${lvlKey}-picking`, level.picking);
       }
-      if (document.getElementById(`${deptKey}${lvlKey}-stocking`)) {
+      if (lvlStockCanvas) {
         updateGaugeAndText(`${deptKey}${lvlKey}-stocking`, level.stocking);
       }
 
@@ -160,7 +165,13 @@ function updateTextOnly(prefix, level) {
 // Render Gauge Function
 function renderGauge(canvas, value) {
   if (!canvas) return;
-  new Chart(canvas, {
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  canvas.height = 80;
+  canvas.width = 160;
+
+  new Chart(ctx, {
     type: 'doughnut',
     data: {
       datasets: [{
@@ -173,6 +184,7 @@ function renderGauge(canvas, value) {
       rotation: -90,
       circumference: 180,
       cutout: '70%',
+      responsive: false,
       plugins: {
         legend: { display: false },
         tooltip: { enabled: false },
@@ -190,3 +202,4 @@ function navigate(pageId) {
 
 // Initialize Dashboard on DOM Ready
 window.addEventListener('DOMContentLoaded', populateDashboard);
+
