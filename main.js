@@ -63,16 +63,21 @@ const dashboardData = {
   },
 };
 
+function getCurrentPage() {
+  if (document.getElementById('main-dashboard')) return 'main';
+  if (document.getElementById('levels-page')) return 'levels';
+  if (document.getElementById('zones-page')) return 'zones';
+  return '';
+}
+
 // Utility Function to Populate Text and Gauges
 function updateGaugeAndText(idPrefix, data) {
   const gaugeEl = document.getElementById(idPrefix);
   const textEl = document.getElementById(`${idPrefix}-text`);
   if (gaugeEl && data.perf !== undefined) {
-    console.log(`Rendering gauge for ${idPrefix} (${data.perf}%)`);
     renderGauge(gaugeEl, data.perf);
     if (textEl) textEl.textContent = `${data.perf}%`;
   }
-
   if (data.wave !== undefined) {
     const waveEl = document.getElementById(`${idPrefix}-wave`);
     if (waveEl) waveEl.textContent = `Current Wave: ${data.wave}`;
@@ -97,41 +102,41 @@ function updateGaugeAndText(idPrefix, data) {
   }
 }
 
-// Render All Gauges and Text from Global Data
 function populateDashboard() {
+  const page = getCurrentPage();
   for (const deptKey in dashboardData) {
     const dept = dashboardData[deptKey];
     const levels = dept.levels;
-
     let isFirstLevel = true;
 
     for (const lvlKey in levels) {
       const level = levels[lvlKey];
 
-      if (document.getElementById('main-dashboard')) {
+      if (page === 'main') {
         if (isFirstLevel) {
           updateGaugeAndText(`${deptKey}Pick`, level.picking);
           updateGaugeAndText(`${deptKey}Stock`, level.stocking);
           updateTextOnly(`${deptKey}`, level);
           isFirstLevel = false;
         }
-      } else if (document.getElementById('levels-page')) {
+      }
+
+      if (page === 'levels') {
         updateGaugeAndText(`${deptKey}${lvlKey}-picking`, level.picking);
         updateGaugeAndText(`${deptKey}${lvlKey}-stocking`, level.stocking);
-      } else if (document.getElementById('zones-page')) {
-        if (level.zones) {
-          for (const zKey in level.zones) {
-            const zone = level.zones[zKey];
-            updateGaugeAndText(`z${zKey}-pick`, zone.picking);
-            updateGaugeAndText(`z${zKey}-stock`, zone.stocking);
-          }
+      }
+
+      if (page === 'zones' && level.zones) {
+        for (const zKey in level.zones) {
+          const zone = level.zones[zKey];
+          updateGaugeAndText(`z${zKey}-pick`, zone.picking);
+          updateGaugeAndText(`z${zKey}-stock`, zone.stocking);
         }
       }
     }
   }
 }
 
-// Utility for adding non-gauge text on main dashboard
 function updateTextOnly(prefix, level) {
   const wave = document.querySelector(`[data-id='${prefix}Wave']`);
   const progress = document.querySelector(`[data-id='${prefix}Progress']`);
@@ -148,7 +153,6 @@ function updateTextOnly(prefix, level) {
   if (left) left.textContent = `${level.stocking?.remaining ?? ''}`;
 }
 
-// Render Gauge Function
 function renderGauge(canvas, value) {
   if (!canvas) return;
 
@@ -180,11 +184,9 @@ function renderGauge(canvas, value) {
   });
 }
 
-// Navigation between pages
 function navigate(pageId) {
   document.querySelectorAll('.page').forEach((page) => page.classList.remove('active'));
   document.getElementById(pageId).classList.add('active');
 }
 
-// Initialize Dashboard on DOM Ready
 window.addEventListener('DOMContentLoaded', populateDashboard);
