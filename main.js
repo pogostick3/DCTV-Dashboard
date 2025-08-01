@@ -117,15 +117,23 @@ function populateDashboard() {
       }
 
       // Level Pages
-      updateGaugeAndText(`${deptKey}${lvlKey}-picking`, level.picking);
-      updateGaugeAndText(`${deptKey}${lvlKey}-stocking`, level.stocking);
+      if (document.getElementById(`${deptKey}${lvlKey}-picking`)) {
+        updateGaugeAndText(`${deptKey}${lvlKey}-picking`, level.picking);
+      }
+      if (document.getElementById(`${deptKey}${lvlKey}-stocking`)) {
+        updateGaugeAndText(`${deptKey}${lvlKey}-stocking`, level.stocking);
+      }
 
       // Zones
       if (level.zones) {
         for (const zKey in level.zones) {
           const zone = level.zones[zKey];
-          updateGaugeAndText(`z${zKey}-pick`, zone.picking);
-          updateGaugeAndText(`z${zKey}-stock`, zone.stocking);
+          if (document.getElementById(`z${zKey}-pick`)) {
+            updateGaugeAndText(`z${zKey}-pick`, zone.picking);
+          }
+          if (document.getElementById(`z${zKey}-stock`)) {
+            updateGaugeAndText(`z${zKey}-stock`, zone.stocking);
+          }
         }
       }
     }
