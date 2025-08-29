@@ -1,42 +1,27 @@
-/* ================== Chart.js plugin (optional) ================== */
+/* ===== Chart.js plugin (optional) ===== */
 if (window.ChartDataLabels) {
   Chart.register(ChartDataLabels);
 }
 
-/* ================== Config ================== */
-// Use relative path if your API runs behind the same domain, otherwise specify full URL.
-const API_URL = window.DASHBOARD_API_URL || '/api/dashboard';
-// Auto-refresh interval (ms). Set to 0 to disable.
-const REFRESH_MS = 30000;
+/* ===== Config ===== */
+const API_URL = 'data/dashboard.json'; // GitHub Pages serves this file
+const REFRESH_MS = 0; // JSON changes only when you push to GitHub, so no auto-refresh needed
 
-/* ================== State ================== */
+/* ===== State ===== */
 let dashboardData = {};
 const charts = {}; // canvasId -> Chart instance
 
-/* ================== Low-level DOM helpers ================== */
-function setTextByDataId(dataId, value) {
-  const el = document.querySelector(`[data-id="${dataId}"]`);
-  if (el) el.textContent = value;
-}
-function setBarWidthByDataId(dataId, pct) {
-  const el = document.querySelector(`[data-id="${dataId}"]`);
-  if (el) el.style.width = `${pct}%`;
-}
-function setTextById(id, value) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = value;
-}
-function setBarWidthById(id, pct) {
-  const el = document.getElementById(id);
-  if (el) el.style.width = `${pct}%`;
-}
+/* ===== DOM helpers ===== */
+const setTextByDataId = (id, v) => { const el = document.querySelector(`[data-id="${id}"]`); if (el) el.textContent = v; };
+const setBarWidthByDataId = (id, v) => { const el = document.querySelector(`[data-id="${id}"]`); if (el) el.style.width = `${v}%`; };
+const setTextById = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+const setBarWidthById = (id, v) => { const el = document.getElementById(id); if (el) el.style.width = `${v}%`; };
 
-/* ================== Gauges ================== */
+/* ===== Gauges ===== */
 function renderGaugeById(canvasId, value) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
 
-  // FIXED canvas size to avoid resize feedback loops
   const w = parseInt(canvas.getAttribute('width') || '160', 10);
   const h = parseInt(canvas.getAttribute('height') || '80', 10);
   canvas.width = w;
@@ -45,20 +30,11 @@ function renderGaugeById(canvasId, value) {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  if (charts[canvasId]) {
-    charts[canvasId].destroy();
-    charts[canvasId] = null;
-  }
+  if (charts[canvasId]) charts[canvasId].destroy();
 
   charts[canvasId] = new Chart(ctx, {
     type: 'doughnut',
-    data: {
-      datasets: [{
-        data: [value, Math.max(0, 100 - value)],
-        backgroundColor: ['#4caf50', '#e0e0e0'],
-        borderWidth: 0
-      }]
-    },
+    data: { datasets: [{ data: [value, Math.max(0, 100 - value)], backgroundColor: ['#4caf50', '#e0e0e0'], borderWidth: 0 }] },
     options: {
       rotation: -90,
       circumference: 180,
@@ -70,11 +46,9 @@ function renderGaugeById(canvasId, value) {
   });
 }
 
-/* ================== Page renderers ================== */
+/* ===== Page renderers ===== */
 function populateMain() {
-  // These depts map to your main tiles in index.html
   const depts = ['mz', 'cf', 'hb', 'nc', 'rr', 'ship'];
-
   depts.forEach((deptKey) => {
     const dept = dashboardData[deptKey];
     if (!dept) return;
@@ -82,11 +56,9 @@ function populateMain() {
     if (!firstLevelKey) return;
     const level = dept.levels[firstLevelKey];
 
-    // Gauges
     renderGaugeById(`${deptKey}Pick`, level.picking?.perf ?? 0);
     renderGaugeById(`${deptKey}Stock`, level.stocking?.perf ?? 0);
 
-    // Numbers
     setTextByDataId(`${deptKey}PickPerf`, `${level.picking?.perf ?? ''}%`);
     setTextByDataId(`${deptKey}StockPerf`, `${level.stocking?.perf ?? ''}%`);
     setTextByDataId(`${deptKey}Wave`, `${level.picking?.wave ?? ''}`);
@@ -199,6 +171,7 @@ function populateLevels_NC() {
   });
 }
 
+/* Zones for MZ */
 function populateMZZones(levelNumber) {
   const level = dashboardData?.mz?.levels?.[levelNumber];
   if (!level || !level.zones) return;
@@ -220,7 +193,7 @@ function populateMZZones(levelNumber) {
   });
 }
 
-/* ================== Router ================== */
+/* ===== Router ===== */
 function populateForPage(pageId) {
   switch (pageId) {
     case 'mainPage':  return populateMain();
@@ -235,7 +208,7 @@ function populateForPage(pageId) {
   }
 }
 
-/* ================== Navigation (used by onclick in HTML) ================== */
+/* ===== Navigation (used by onclick in HTML) ===== */
 function navigate(pageId) {
   document.querySelectorAll('.page').forEach((p) => p.classList.remove('active'));
   const page = document.getElementById(pageId);
@@ -245,23 +218,16 @@ function navigate(pageId) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 }
-window.navigate = navigate; // make available to inline onclick
+window.navigate = navigate;
 
-/* ================== Fetch + boot ================== */
-async function fetchData() {
-  const res = await fetch(API_URL, { cache: 'no-store' });
-  if (!res.ok) throw new Error(`API ${res.status}`);
-  return res.json();
-}
-
+/* ===== Fetch + boot ===== */
 async function fetchAndRender(pageId = 'mainPage') {
   try {
-    dashboardData = await fetchData();
+    const res = await fetch(API_URL, { cache: 'no-store' });
+    dashboardData = await res.json();
     populateForPage(pageId);
-    const t = document.getElementById('lastUpdated');
-    if (t) t.textContent = new Date().toLocaleString();
   } catch (err) {
-    console.error('Failed to load dashboard data:', err);
+    console.error('Failed to load data/dashboard.json:', err);
   }
 }
 
