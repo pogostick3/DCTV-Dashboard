@@ -1,11 +1,9 @@
-// Register Chart.js plugin if available
+// Register plugin if present
 if (window.ChartDataLabels) {
   Chart.register(ChartDataLabels);
 }
 
-/* --------------------------------------------------------------------------------
-   DATA
--------------------------------------------------------------------------------- */
+/* ------------------------------ DATA ------------------------------ */
 const dashboardData = {
   mz: {
     levels: {
@@ -70,39 +68,22 @@ const dashboardData = {
   },
 };
 
-/* --------------------------------------------------------------------------------
-   HELPERS
--------------------------------------------------------------------------------- */
-const charts = {}; // id -> Chart instance
-
-function setTextByDataId(dataId, value) {
-  const el = document.querySelector(`[data-id="${dataId}"]`);
-  if (el != null) el.textContent = value;
-}
-
-function setTextById(id, value) {
-  const el = document.getElementById(id);
-  if (el != null) el.textContent = value;
-}
-
-function setBarWidthByDataId(dataId, pct) {
-  const el = document.querySelector(`[data-id="${dataId}"]`);
-  if (el != null) el.style.width = `${pct}%`;
-}
-
-function setBarWidthById(id, pct) {
-  const el = document.getElementById(id);
-  if (el != null) el.style.width = `${pct}%`;
-}
+/* ----------------------- CHART MGMT / HELPERS ---------------------- */
+const charts = {}; // canvasId -> Chart
 
 function renderGaugeById(canvasId, value) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
 
+  // Ensure stable, fixed canvas size (prevents resize loops)
+  const w = parseInt(canvas.getAttribute('width') || '160', 10);
+  const h = parseInt(canvas.getAttribute('height') || '80', 10);
+  canvas.width = w;
+  canvas.height = h;
+
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  // Destroy previous instance if re-rendering
   if (charts[canvasId]) {
     charts[canvasId].destroy();
     charts[canvasId] = null;
@@ -110,48 +91,48 @@ function renderGaugeById(canvasId, value) {
 
   charts[canvasId] = new Chart(ctx, {
     type: 'doughnut',
-    data: {
-      datasets: [
-        {
-          data: [value, Math.max(0, 100 - value)],
-          backgroundColor: ['#4caf50', '#e0e0e0'],
-          borderWidth: 0,
-        },
-      ],
-    },
+    data: { datasets: [{ data: [value, Math.max(0, 100 - value)], backgroundColor: ['#4caf50', '#e0e0e0'], borderWidth: 0 }] },
     options: {
       rotation: -90,
       circumference: 180,
       cutout: '70%',
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: { enabled: false },
-        datalabels: { display: false },
-      },
-    },
+      responsive: false,          // <— fixed sizing: no resize observer
+      maintainAspectRatio: false, // <— use exact canvas height/width
+      plugins: { legend: { display: false }, tooltip: { enabled: false }, datalabels: { display: false } }
+    }
   });
 }
 
-/* --------------------------------------------------------------------------------
-   POPULATE FUNCTIONS (per page)
--------------------------------------------------------------------------------- */
+function setTextByDataId(dataId, value) {
+  const el = document.querySelector(`[data-id="${dataId}"]`);
+  if (el) el.textContent = value;
+}
+function setBarWidthByDataId(dataId, pct) {
+  const el = document.querySelector(`[data-id="${dataId}"]`);
+  if (el) el.style.width = `${pct}%`;
+}
+function setTextById(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+function setBarWidthById(id, pct) {
+  const el = document.getElementById(id);
+  if (el) el.style.width = `${pct}%`;
+}
+
+/* ---------------------------- POPULATORS --------------------------- */
 function populateMain() {
   const depts = ['mz', 'cf', 'hb', 'nc', 'rr', 'ship'];
   depts.forEach((deptKey) => {
     const dept = dashboardData[deptKey];
     if (!dept) return;
 
-    // Use the first level available for the dashboard summary
     const firstLevelKey = Object.keys(dept.levels)[0];
     const level = dept.levels[firstLevelKey];
 
-    // Gauges
     renderGaugeById(`${deptKey}Pick`, level.picking.perf);
     renderGaugeById(`${deptKey}Stock`, level.stocking.perf);
 
-    // Text metrics
     setTextByDataId(`${deptKey}PickPerf`, `${level.picking.perf}%`);
     setTextByDataId(`${deptKey}StockPerf`, `${level.stocking.perf}%`);
 
@@ -248,22 +229,21 @@ function populateLevels_NC() {
     ['nchighpick', 'highPick'],
     ['ncncrr', 'ncrr'],
   ];
-
   map.forEach(([prefix, key]) => {
     const level = dashboardData.nc.levels[key];
     if (!level) return;
 
     renderGaugeById(`${prefix}-picking-gauge`, level.picking.perf);
-    setTextByDataId(`${prefix.replace('-', '')}Pick`, `${level.picking.perf}%`);
-    setTextByDataId(`${prefix.replace('-', '')}Wave`, `${level.picking.wave}`);
-    setBarWidthByDataId(`${prefix.replace('-', '')}Progress`, level.picking.progress);
-    setTextByDataId(`${prefix.replace('-', '')}ProgressText`, `${level.picking.progress}%`);
+    setTextByDataId(`${prefix}Pick`, `${level.picking.perf}%`);
+    setTextByDataId(`${prefix}Wave`, `${level.picking.wave}`);
+    setBarWidthByDataId(`${prefix}Progress`, level.picking.progress);
+    setTextByDataId(`${prefix}ProgressText`, `${level.picking.progress}%`);
 
     renderGaugeById(`${prefix}-stocking-gauge`, level.stocking.perf);
-    setTextByDataId(`${prefix.replace('-', '')}Stock`, `${level.stocking.perf}%`);
-    setTextByDataId(`${prefix.replace('-', '')}Expected`, `${level.stocking.expected}`);
-    setTextByDataId(`${prefix.replace('-', '')}Stocked`, `${level.stocking.stocked}`);
-    setTextByDataId(`${prefix.replace('-', '')}Remaining`, `${level.stocking.remaining}`);
+    setTextByDataId(`${prefix}Stock`, `${level.stocking.perf}%`);
+    setTextByDataId(`${prefix}Expected`, `${level.stocking.expected}`);
+    setTextByDataId(`${prefix}Stocked`, `${level.stocking.stocked}`);
+    setTextByDataId(`${prefix}Remaining`, `${level.stocking.remaining}`);
   });
 }
 
@@ -288,40 +268,18 @@ function populateMZZones(levelNumber) {
   });
 }
 
-/* --------------------------------------------------------------------------------
-   ROUTER
--------------------------------------------------------------------------------- */
+/* ------------------------------ ROUTER ----------------------------- */
 function populateForPage(pageId) {
   switch (pageId) {
-    case 'mainPage':
-      populateMain();
-      break;
-    case 'mzLevels':
-      populateLevels_MZ();
-      break;
-    case 'cfLevels':
-      populateLevels_CF();
-      break;
-    case 'hbLevels':
-      populateLevels_HB();
-      break;
-    case 'rrLevels':
-      populateLevels_RR();
-      break;
-    case 'ncLevels':
-      populateLevels_NC();
-      break;
-    case 'mzLevel1':
-      populateMZZones(1);
-      break;
-    case 'mzLevel2':
-      populateMZZones(2);
-      break;
-    case 'mzLevel3':
-      populateMZZones(3);
-      break;
-    default:
-      break;
+    case 'mainPage':  return populateMain();
+    case 'mzLevels':  return populateLevels_MZ();
+    case 'cfLevels':  return populateLevels_CF();
+    case 'hbLevels':  return populateLevels_HB();
+    case 'rrLevels':  return populateLevels_RR();
+    case 'ncLevels':  return populateLevels_NC();
+    case 'mzLevel1':  return populateMZZones(1);
+    case 'mzLevel2':  return populateMZZones(2);
+    case 'mzLevel3':  return populateMZZones(3);
   }
 }
 
@@ -335,7 +293,6 @@ function navigate(pageId) {
   }
 }
 
-// Initial render for main dashboard
 window.addEventListener('DOMContentLoaded', () => {
   populateForPage('mainPage');
 });
