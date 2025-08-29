@@ -1,18 +1,30 @@
-/* Global Styles */
+/* ---------- Global ---------- */
+:root {
+  --bg: #f4f4f4;
+  --card: #ffffff;
+  --shadow: rgba(0, 0, 0, 0.1);
+  --primary: #4caf50;
+  --accent: #007bff;
+  --accent-hover: #0056b3;
+  --text: #333;
+  --muted: #e0e0e0;
+  --warn: orange;
+}
+
+* { box-sizing: border-box; }
+
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background-color: #f4f4f4;
+  background-color: var(--bg);
+  color: var(--text);
 }
 
 .page {
   display: none;
   padding: 20px;
 }
-
-.page.active {
-  display: block;
-}
+.page.active { display: block; }
 
 .header {
   font-size: 2em;
@@ -21,7 +33,7 @@ body {
   margin-bottom: 20px;
 }
 
-/* Tile Container */
+/* ---------- Tiles (Main) ---------- */
 .tile-container {
   display: flex;
   flex-direction: column;
@@ -36,24 +48,26 @@ body {
 }
 
 .tile {
-  background-color: #fff;
+  background-color: var(--card);
   border-radius: 8px;
   padding: 15px;
   width: 300px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 5px var(--shadow);
   cursor: pointer;
   transition: transform 0.2s;
 }
-
-.tile:hover {
-  transform: scale(1.03);
-}
+.tile:hover { transform: scale(1.03); }
 
 .gauges.horizontal {
   display: flex;
   justify-content: space-between;
   gap: 10px;
   margin-bottom: 10px;
+}
+
+.gauges.horizontal canvas {
+  width: 120px;  /* ensure visible size on main tiles */
+  height: 60px;
 }
 
 .metrics {
@@ -65,7 +79,7 @@ body {
 .progress-bar {
   width: 100%;
   height: 16px;
-  background-color: #e0e0e0;
+  background-color: var(--muted);
   border-radius: 8px;
   overflow: hidden;
   margin: 5px 0;
@@ -74,13 +88,13 @@ body {
 
 .progress-fill {
   height: 100%;
-  background-color: #4caf50;
+  background-color: var(--primary);
   transition: width 0.5s ease-in-out;
   border-radius: 8px 0 0 8px;
   display: block;
 }
 
-/* Level Pages */
+/* ---------- Level Pages ---------- */
 .levels-container-vertical {
   display: flex;
   flex-direction: column;
@@ -89,11 +103,11 @@ body {
 }
 
 .level-tile {
-  background-color: #fff;
+  background-color: var(--card);
   padding: 20px;
   width: 90%;
   max-width: 1000px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  box-shadow: 0 0 10px var(--shadow);
   border-radius: 8px;
 }
 
@@ -120,10 +134,9 @@ body {
   height: 15px;
   border-radius: 50%;
 }
-
-.status-yellow {
-  background-color: yellow;
-}
+.status-yellow { background-color: #ffd400; }
+.status-green  { background-color: #4caf50; }
+.status-red    { background-color: #f44336; }
 
 .dual-section {
   display: flex;
@@ -139,55 +152,33 @@ body {
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  min-width: 400px;
+  min-width: 420px;
   gap: 20px;
   text-align: center;
   position: relative;
 }
 
-.sub-section .left {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: center;
-  justify-content: center;
-}
-
+.sub-section .left,
 .sub-section .right {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
 }
 
-/* Picking section aligns text left */
-.sub-section:first-of-type .right {
-  align-items: flex-start;
-  text-align: left;
-}
-
-/* Stocking section aligns text right */
-.sub-section:last-of-type .right {
-  align-items: flex-end;
-  text-align: right;
-}
+/* Align text differently for the two halves */
+.sub-section:first-of-type .right { align-items: flex-start; text-align: left; }
+.sub-section:last-of-type  .right { align-items: flex-end;   text-align: right; }
 
 .divider {
   width: 2px;
   height: 60%;
   background-color: #ccc;
 }
-
-.divider.picking {
-  background-color: orange;
-}
-
-.divider.stocking {
-  background-color: #4caf50;
-}
+.divider.picking { background-color: var(--warn); }
+.divider.stocking { background-color: var(--primary); }
 
 .subsection-separator {
   width: 2px;
@@ -196,9 +187,10 @@ body {
   align-self: stretch;
 }
 
-canvas {
-  max-width: 100%;
-  height: auto;
+.level-tile canvas {
+  width: 150px;  /* fixed size ensures Chart renders when hidden/shown */
+  height: 75px;
+  display: block;
 }
 
 button {
@@ -207,14 +199,11 @@ button {
   font-size: 1em;
   border: none;
   border-radius: 4px;
-  background-color: #007bff;
+  background-color: var(--accent);
   color: white;
   cursor: pointer;
 }
-
-button:hover {
-  background-color: #0056b3;
-}
+button:hover { background-color: var(--accent-hover); }
 
 .performance-metric {
   font-size: 1em;
@@ -225,5 +214,5 @@ button:hover {
   left: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
-  color: #333;
+  color: var(--text);
 }
