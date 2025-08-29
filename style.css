@@ -1,4 +1,3 @@
-/* ---------- Global ---------- */
 :root {
   --bg: #f4f4f4;
   --card: #ffffff;
@@ -20,10 +19,7 @@ body {
   color: var(--text);
 }
 
-.page {
-  display: none;
-  padding: 20px;
-}
+.page { display: none; padding: 20px; }
 .page.active { display: block; }
 
 .header {
@@ -33,19 +29,9 @@ body {
   margin-bottom: 20px;
 }
 
-/* ---------- Tiles (Main) ---------- */
-.tile-container {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.tile-row {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  flex-wrap: wrap;
-}
+/* ---- Tiles on Main ---- */
+.tile-container { display: flex; flex-direction: column; gap: 20px; }
+.tile-row { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
 
 .tile {
   background-color: var(--card);
@@ -58,23 +44,9 @@ body {
 }
 .tile:hover { transform: scale(1.03); }
 
-.gauges.horizontal {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 10px;
-}
+.gauges.horizontal { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
 
-.gauges.horizontal canvas {
-  width: 120px;  /* ensure visible size on main tiles */
-  height: 60px;
-}
-
-.metrics {
-  font-size: 0.9em;
-  margin: 5px 0;
-  text-align: center;
-}
+.metrics { font-size: 0.9em; margin: 5px 0; text-align: center; }
 
 .progress-bar {
   width: 100%;
@@ -85,7 +57,6 @@ body {
   margin: 5px 0;
   display: block;
 }
-
 .progress-fill {
   height: 100%;
   background-color: var(--primary);
@@ -94,13 +65,8 @@ body {
   display: block;
 }
 
-/* ---------- Level Pages ---------- */
-.levels-container-vertical {
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
-  align-items: center;
-}
+/* ---- Level Pages ---- */
+.levels-container-vertical { display: flex; flex-direction: column; gap: 30px; align-items: center; }
 
 .level-tile {
   background-color: var(--card);
@@ -111,87 +77,30 @@ body {
   border-radius: 8px;
 }
 
-.tile-header {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-  margin-bottom: 20px;
-}
+/* Keep canvases from affecting layout height calculations */
+.gauge-wrap { position: relative; width: 160px; height: 80px; }
+canvas { display: block; max-width: 100%; }
 
-.level-title {
-  margin: 0;
-  font-size: 1.5em;
-  text-align: center;
-  width: 100%;
-}
+.tile-header { display: flex; justify-content: center; align-items: center; position: relative; margin-bottom: 20px; }
+.level-title { margin: 0; font-size: 1.5em; text-align: center; width: 100%; }
 
-.status-dot {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-}
+.status-dot { position: absolute; top: 0; right: 0; width: 15px; height: 15px; border-radius: 50%; }
 .status-yellow { background-color: #ffd400; }
 .status-green  { background-color: #4caf50; }
 .status-red    { background-color: #f44336; }
 
-.dual-section {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  gap: 30px;
-  flex-wrap: wrap;
-  position: relative;
-}
+.dual-section { display: flex; flex-direction: row; justify-content: space-between; gap: 30px; flex-wrap: wrap; position: relative; }
+.sub-section { display: flex; flex-direction: row; align-items: center; justify-content: center; min-width: 420px; gap: 20px; text-align: center; position: relative; }
 
-.sub-section {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  min-width: 420px;
-  gap: 20px;
-  text-align: center;
-  position: relative;
-}
-
-.sub-section .left,
-.sub-section .right {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Align text differently for the two halves */
+.sub-section .left, .sub-section .right { flex: 1; display: flex; flex-direction: column; gap: 10px; align-items: center; justify-content: center; }
 .sub-section:first-of-type .right { align-items: flex-start; text-align: left; }
 .sub-section:last-of-type  .right { align-items: flex-end;   text-align: right; }
 
-.divider {
-  width: 2px;
-  height: 60%;
-  background-color: #ccc;
-}
+.divider { width: 2px; height: 60%; background-color: #ccc; }
 .divider.picking { background-color: var(--warn); }
 .divider.stocking { background-color: var(--primary); }
 
-.subsection-separator {
-  width: 2px;
-  height: 100%;
-  background-color: #999;
-  align-self: stretch;
-}
-
-.level-tile canvas {
-  width: 150px;  /* fixed size ensures Chart renders when hidden/shown */
-  height: 75px;
-  display: block;
-}
+.subsection-separator { width: 2px; height: 100%; background-color: #999; align-self: stretch; }
 
 button {
   margin-left: 10px;
