@@ -5,9 +5,9 @@ const fs = require('fs');
 
 const app = express();
 app.use(cors());
-app.use(express.static('.')); // 👈 this serves your index.html etc.
+app.use(express.static('public')); // 👈 this serves your index.html etc.
 
-const FILE = './dashboard.xlsx';
+const FILE = './data/dashboard.xlsx';
 
 function loadWorkbook() {
   const wb = XLSX.readFile(FILE);
