@@ -1,9 +1,11 @@
-// Register Chart.js plugin if needed
+// Register Chart.js plugin if available
 if (window.ChartDataLabels) {
   Chart.register(ChartDataLabels);
 }
 
-// Global Data
+/* --------------------------------------------------------------------------------
+   DATA
+-------------------------------------------------------------------------------- */
 const dashboardData = {
   mz: {
     levels: {
@@ -61,132 +63,279 @@ const dashboardData = {
       ncrr: { picking: { perf: 86, wave: 5, progress: 74 }, stocking: { perf: 89, expected: 1020, stocked: 920, remaining: 100 } },
     },
   },
+  ship: {
+    levels: {
+      1: { picking: { perf: 73, wave: 2, progress: 52 }, stocking: { perf: 78, expected: 640, stocked: 420, remaining: 220 } },
+    },
+  },
 };
 
-function getCurrentPage() {
-  if (document.getElementById('main-dashboard')) return 'main';
-  if (document.getElementById('levels-page')) return 'levels';
-  if (document.getElementById('zones-page')) return 'zones';
-  return '';
+/* --------------------------------------------------------------------------------
+   HELPERS
+-------------------------------------------------------------------------------- */
+const charts = {}; // id -> Chart instance
+
+function setTextByDataId(dataId, value) {
+  const el = document.querySelector(`[data-id="${dataId}"]`);
+  if (el != null) el.textContent = value;
 }
 
-// Utility Function to Populate Text and Gauges
-function updateGaugeAndText(idPrefix, data) {
-  const gaugeEl = document.getElementById(idPrefix);
-  const textEl = document.getElementById(`${idPrefix}-text`);
-  if (gaugeEl && data.perf !== undefined) {
-    renderGauge(gaugeEl, data.perf);
-    if (textEl) textEl.textContent = `${data.perf}%`;
-  }
-  if (data.wave !== undefined) {
-    const waveEl = document.getElementById(`${idPrefix}-wave`);
-    if (waveEl) waveEl.textContent = `Current Wave: ${data.wave}`;
-  }
-  if (data.progress !== undefined) {
-    const barEl = document.getElementById(`${idPrefix}-progress`);
-    const progText = document.getElementById(`${idPrefix}-progress-text`);
-    if (barEl) barEl.style.width = `${data.progress}%`;
-    if (progText) progText.textContent = `Progress: ${data.progress}%`;
-  }
-  if (data.expected !== undefined) {
-    const expectedEl = document.getElementById(`${idPrefix}-expected`);
-    if (expectedEl) expectedEl.textContent = `Expected: ${data.expected}`;
-  }
-  if (data.stocked !== undefined) {
-    const stockedEl = document.getElementById(`${idPrefix}-stocked`);
-    if (stockedEl) stockedEl.textContent = `Stocked: ${data.stocked}`;
-  }
-  if (data.remaining !== undefined) {
-    const remainingEl = document.getElementById(`${idPrefix}-remaining`);
-    if (remainingEl) remainingEl.textContent = `Remaining: ${data.remaining}`;
-  }
+function setTextById(id, value) {
+  const el = document.getElementById(id);
+  if (el != null) el.textContent = value;
 }
 
-function populateDashboard() {
-  const page = getCurrentPage();
-  for (const deptKey in dashboardData) {
-    const dept = dashboardData[deptKey];
-    const levels = dept.levels;
-    let isFirstLevel = true;
-
-    for (const lvlKey in levels) {
-      const level = levels[lvlKey];
-
-      if (page === 'main') {
-        if (isFirstLevel) {
-          updateGaugeAndText(`${deptKey}Pick`, level.picking);
-          updateGaugeAndText(`${deptKey}Stock`, level.stocking);
-          updateTextOnly(`${deptKey}`, level);
-          isFirstLevel = false;
-        }
-      }
-
-      if (page === 'levels') {
-        updateGaugeAndText(`${deptKey}${lvlKey}-picking`, level.picking);
-        updateGaugeAndText(`${deptKey}${lvlKey}-stocking`, level.stocking);
-      }
-
-      if (page === 'zones' && level.zones) {
-        for (const zKey in level.zones) {
-          const zone = level.zones[zKey];
-          updateGaugeAndText(`z${zKey}-pick`, zone.picking);
-          updateGaugeAndText(`z${zKey}-stock`, zone.stocking);
-        }
-      }
-    }
-  }
+function setBarWidthByDataId(dataId, pct) {
+  const el = document.querySelector(`[data-id="${dataId}"]`);
+  if (el != null) el.style.width = `${pct}%`;
 }
 
-function updateTextOnly(prefix, level) {
-  const wave = document.querySelector(`[data-id='${prefix}Wave']`);
-  const progress = document.querySelector(`[data-id='${prefix}Progress']`);
-  const progressText = document.querySelector(`[data-id='${prefix}ProgressText']`);
-  const expected = document.querySelector(`[data-id='${prefix}Expected']`);
-  const stocked = document.querySelector(`[data-id='${prefix}Stocked']`);
-  const left = document.querySelector(`[data-id='${prefix}Left']`);
-
-  if (wave) wave.textContent = `Current Wave: ${level.picking?.wave ?? ''}`;
-  if (progress) progress.style.width = `${level.picking?.progress ?? 0}%`;
-  if (progressText) progressText.textContent = `Progress: ${level.picking?.progress ?? 0}%`;
-  if (expected) expected.textContent = `${level.stocking?.expected ?? ''}`;
-  if (stocked) stocked.textContent = `${level.stocking?.stocked ?? ''}`;
-  if (left) left.textContent = `${level.stocking?.remaining ?? ''}`;
+function setBarWidthById(id, pct) {
+  const el = document.getElementById(id);
+  if (el != null) el.style.width = `${pct}%`;
 }
 
-function renderGauge(canvas, value) {
+function renderGaugeById(canvasId, value) {
+  const canvas = document.getElementById(canvasId);
   if (!canvas) return;
 
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
-  canvas.height = 80;
-  canvas.width = 160;
 
-  new Chart(ctx, {
+  // Destroy previous instance if re-rendering
+  if (charts[canvasId]) {
+    charts[canvasId].destroy();
+    charts[canvasId] = null;
+  }
+
+  charts[canvasId] = new Chart(ctx, {
     type: 'doughnut',
     data: {
-      datasets: [{
-        data: [value, 100 - value],
-        backgroundColor: ['#4caf50', '#e0e0e0'],
-        borderWidth: 0,
-      }]
+      datasets: [
+        {
+          data: [value, Math.max(0, 100 - value)],
+          backgroundColor: ['#4caf50', '#e0e0e0'],
+          borderWidth: 0,
+        },
+      ],
     },
     options: {
       rotation: -90,
       circumference: 180,
       cutout: '70%',
-      responsive: false,
+      responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
         tooltip: { enabled: false },
         datalabels: { display: false },
-      }
-    }
+      },
+    },
   });
 }
 
-function navigate(pageId) {
-  document.querySelectorAll('.page').forEach((page) => page.classList.remove('active'));
-  document.getElementById(pageId).classList.add('active');
+/* --------------------------------------------------------------------------------
+   POPULATE FUNCTIONS (per page)
+-------------------------------------------------------------------------------- */
+function populateMain() {
+  const depts = ['mz', 'cf', 'hb', 'nc', 'rr', 'ship'];
+  depts.forEach((deptKey) => {
+    const dept = dashboardData[deptKey];
+    if (!dept) return;
+
+    // Use the first level available for the dashboard summary
+    const firstLevelKey = Object.keys(dept.levels)[0];
+    const level = dept.levels[firstLevelKey];
+
+    // Gauges
+    renderGaugeById(`${deptKey}Pick`, level.picking.perf);
+    renderGaugeById(`${deptKey}Stock`, level.stocking.perf);
+
+    // Text metrics
+    setTextByDataId(`${deptKey}PickPerf`, `${level.picking.perf}%`);
+    setTextByDataId(`${deptKey}StockPerf`, `${level.stocking.perf}%`);
+
+    setTextByDataId(`${deptKey}Wave`, `${level.picking.wave}`);
+    setBarWidthByDataId(`${deptKey}Progress`, level.picking.progress);
+    setTextByDataId(`${deptKey}ProgressText`, `Progress: ${level.picking.progress}%`);
+
+    setTextByDataId(`${deptKey}Expected`, `${level.stocking.expected}`);
+    setTextByDataId(`${deptKey}Stocked`, `${level.stocking.stocked}`);
+    setTextByDataId(`${deptKey}Left`, `${level.stocking.remaining}`);
+  });
 }
 
-window.addEventListener('DOMContentLoaded', populateDashboard);
+function populateLevels_MZ() {
+  [1, 2, 3].forEach((lvl) => {
+    const level = dashboardData.mz.levels[lvl];
+    if (!level) return;
+
+    renderGaugeById(`mz${lvl}-picking-gauge`, level.picking.perf);
+    setTextByDataId(`mz${lvl}Pick`, `${level.picking.perf}%`);
+    setTextByDataId(`mz${lvl}Wave`, `${level.picking.wave}`);
+    setBarWidthByDataId(`mz${lvl}Progress`, level.picking.progress);
+    setTextByDataId(`mz${lvl}ProgressText`, `${level.picking.progress}%`);
+
+    renderGaugeById(`mz${lvl}-stocking-gauge`, level.stocking.perf);
+    setTextByDataId(`mz${lvl}Stock`, `${level.stocking.perf}%`);
+    setTextByDataId(`mz${lvl}Expected`, `${level.stocking.expected}`);
+    setTextByDataId(`mz${lvl}Stocked`, `${level.stocking.stocked}`);
+    setTextByDataId(`mz${lvl}Remaining`, `${level.stocking.remaining}`);
+  });
+}
+
+function populateLevels_CF() {
+  [1, 2, 3].forEach((lvl) => {
+    const level = dashboardData.cf.levels[lvl];
+    if (!level) return;
+
+    renderGaugeById(`cf${lvl}-picking-gauge`, level.picking.perf);
+    setTextByDataId(`cf${lvl}Pick`, `${level.picking.perf}%`);
+    setTextByDataId(`cf${lvl}Wave`, `${level.picking.wave}`);
+    setBarWidthByDataId(`cf${lvl}Progress`, level.picking.progress);
+    setTextByDataId(`cf${lvl}ProgressText`, `${level.picking.progress}%`);
+
+    renderGaugeById(`cf${lvl}-stocking-gauge`, level.stocking.perf);
+    setTextByDataId(`cf${lvl}Stock`, `${level.stocking.perf}%`);
+    setTextByDataId(`cf${lvl}Expected`, `${level.stocking.expected}`);
+    setTextByDataId(`cf${lvl}Stocked`, `${level.stocking.stocked}`);
+    setTextByDataId(`cf${lvl}Remaining`, `${level.stocking.remaining}`);
+  });
+}
+
+function populateLevels_HB() {
+  [1, 2, 3].forEach((lvl) => {
+    const level = dashboardData.hb.levels[lvl];
+    if (!level) return;
+
+    renderGaugeById(`hb${lvl}-picking-gauge`, level.picking.perf);
+    setTextByDataId(`hb${lvl}Pick`, `${level.picking.perf}%`);
+    setTextByDataId(`hb${lvl}Wave`, `${level.picking.wave}`);
+    setBarWidthByDataId(`hb${lvl}Progress`, level.picking.progress);
+    setTextByDataId(`hb${lvl}ProgressText`, `${level.picking.progress}%`);
+
+    renderGaugeById(`hb${lvl}-stocking-gauge`, level.stocking.perf);
+    setTextByDataId(`hb${lvl}Stock`, `${level.stocking.perf}%`);
+    setTextByDataId(`hb${lvl}Expected`, `${level.stocking.expected}`);
+    setTextByDataId(`hb${lvl}Stocked`, `${level.stocking.stocked}`);
+    setTextByDataId(`hb${lvl}Remaining`, `${level.stocking.remaining}`);
+  });
+}
+
+function populateLevels_RR() {
+  [1, 2].forEach((lvl) => {
+    const level = dashboardData.rr.levels[lvl];
+    if (!level) return;
+
+    renderGaugeById(`rr${lvl}-picking-gauge`, level.picking.perf);
+    setTextByDataId(`rr${lvl}Pick`, `${level.picking.perf}%`);
+    setTextByDataId(`rr${lvl}Wave`, `${level.picking.wave}`);
+    setBarWidthByDataId(`rr${lvl}Progress`, level.picking.progress);
+    setTextByDataId(`rr${lvl}ProgressText`, `${level.picking.progress}%`);
+
+    renderGaugeById(`rr${lvl}-stocking-gauge`, level.stocking.perf);
+    setTextByDataId(`rr${lvl}Stock`, `${level.stocking.perf}%`);
+    setTextByDataId(`rr${lvl}Expected`, `${level.stocking.expected}`);
+    setTextByDataId(`rr${lvl}Stocked`, `${level.stocking.stocked}`);
+    setTextByDataId(`rr${lvl}Remaining`, `${level.stocking.remaining}`);
+  });
+}
+
+function populateLevels_NC() {
+  const map = [
+    ['ncoil', 'oil'],
+    ['ncpbs', 'pbs'],
+    ['nchighpick', 'highPick'],
+    ['ncncrr', 'ncrr'],
+  ];
+
+  map.forEach(([prefix, key]) => {
+    const level = dashboardData.nc.levels[key];
+    if (!level) return;
+
+    renderGaugeById(`${prefix}-picking-gauge`, level.picking.perf);
+    setTextByDataId(`${prefix.replace('-', '')}Pick`, `${level.picking.perf}%`);
+    setTextByDataId(`${prefix.replace('-', '')}Wave`, `${level.picking.wave}`);
+    setBarWidthByDataId(`${prefix.replace('-', '')}Progress`, level.picking.progress);
+    setTextByDataId(`${prefix.replace('-', '')}ProgressText`, `${level.picking.progress}%`);
+
+    renderGaugeById(`${prefix}-stocking-gauge`, level.stocking.perf);
+    setTextByDataId(`${prefix.replace('-', '')}Stock`, `${level.stocking.perf}%`);
+    setTextByDataId(`${prefix.replace('-', '')}Expected`, `${level.stocking.expected}`);
+    setTextByDataId(`${prefix.replace('-', '')}Stocked`, `${level.stocking.stocked}`);
+    setTextByDataId(`${prefix.replace('-', '')}Remaining`, `${level.stocking.remaining}`);
+  });
+}
+
+function populateMZZones(levelNumber) {
+  const level = dashboardData.mz.levels[levelNumber];
+  if (!level || !level.zones) return;
+
+  Object.keys(level.zones).forEach((zKey) => {
+    const z = level.zones[zKey];
+
+    renderGaugeById(`z${zKey}-picking-gauge`, z.picking.perf);
+    setTextById(`z${zKey}-pick-text`, `${z.picking.perf}%`);
+    setTextById(`z${zKey}-pick-wave`, `Current Wave: ${z.picking.wave}`);
+    setBarWidthById(`z${zKey}-pick-progress`, z.picking.progress);
+    setTextById(`z${zKey}-pick-progress-text`, `Progress: ${z.picking.progress}%`);
+
+    renderGaugeById(`z${zKey}-stocking-gauge`, z.stocking.perf);
+    setTextById(`z${zKey}-stock-text`, `${z.stocking.perf}%`);
+    setTextById(`z${zKey}-stock-expected`, `Expected: ${z.stocking.expected}`);
+    setTextById(`z${zKey}-stock-stocked`, `Stocked: ${z.stocking.stocked}`);
+    setTextById(`z${zKey}-stock-remaining`, `Remaining: ${z.stocking.remaining}`);
+  });
+}
+
+/* --------------------------------------------------------------------------------
+   ROUTER
+-------------------------------------------------------------------------------- */
+function populateForPage(pageId) {
+  switch (pageId) {
+    case 'mainPage':
+      populateMain();
+      break;
+    case 'mzLevels':
+      populateLevels_MZ();
+      break;
+    case 'cfLevels':
+      populateLevels_CF();
+      break;
+    case 'hbLevels':
+      populateLevels_HB();
+      break;
+    case 'rrLevels':
+      populateLevels_RR();
+      break;
+    case 'ncLevels':
+      populateLevels_NC();
+      break;
+    case 'mzLevel1':
+      populateMZZones(1);
+      break;
+    case 'mzLevel2':
+      populateMZZones(2);
+      break;
+    case 'mzLevel3':
+      populateMZZones(3);
+      break;
+    default:
+      break;
+  }
+}
+
+function navigate(pageId) {
+  document.querySelectorAll('.page').forEach((p) => p.classList.remove('active'));
+  const page = document.getElementById(pageId);
+  if (page) {
+    page.classList.add('active');
+    populateForPage(pageId);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+// Initial render for main dashboard
+window.addEventListener('DOMContentLoaded', () => {
+  populateForPage('mainPage');
+});
