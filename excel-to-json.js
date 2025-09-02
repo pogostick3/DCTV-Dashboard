@@ -1,17 +1,19 @@
 // excel-to-json.js  — convert dashboard.xlsx -> data/dashboard.json
-
 const XLSX = require('xlsx');
 const fs = require('fs');
 
 const FILE = './dashboard.xlsx';       // Excel in repo root
 const OUT  = './data/dashboard.json';  // Output JSON
 
-// helpers
+// ---------- helpers ----------
 const num = v => (Number.isFinite(Number(v)) ? Number(v) : 0);
 const key = s => String(s ?? '').trim();
+
+// pull a value from a row using multiple possible header names
 function getVal(row, candidates) {
-  // try exact keys, then normalized (lowercase, remove spaces/underscores)
+  // try exact keys first
   for (const k of candidates) if (row[k] !== undefined) return row[k];
+  // then try normalized keys: lowercase + remove spaces/underscores
   const norm = {};
   for (const k in row) norm[k.toLowerCase().replace(/[\s_]/g, '')] = row[k];
   for (const k of candidates) {
@@ -21,8 +23,37 @@ function getVal(row, candidates) {
   return undefined;
 }
 
+// parse the ShippingWaves sheet (Wave | Progress)
+function readShippingWaves(workbook) {
+  const ws = workbook.Sheets['ShippingWaves'];
+  if (!ws) return [];
+  const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+  const toPct = (v) => {
+    if (v === '' || v === null || v === undefined) return null;
+    if (typeof v === 'number') {
+      // If Excel cell is a percent (0.75), convert to 75
+      return Math.round((v <= 1 ? v * 100 : v));
+    }
+    // Accept "75%" or "75"
+    const s = String(v).trim().replace('%', '');
+    const n = Number(s);
+    if (!Number.isFinite(n)) return null;
+    return Math.round(n);
+  };
+
+  return rows
+    .map(r => ({
+      wave: Number(r.Wave),
+      progress: toPct(r.Progress)
+    }))
+    .filter(r => Number.isFinite(r.wave) && Number.isFinite(r.progress));
+}
+
+// ---------- main conversion ----------
 function convert() {
   const wb = XLSX.readFile(FILE);
+
   const levels = XLSX.utils.sheet_to_json(wb.Sheets['levels'] || {});
   const zones  = XLSX.utils.sheet_to_json(wb.Sheets['zones']  || {});
 
@@ -38,41 +69,17 @@ function convert() {
     stock_stocked:   ['stock_stocked', 'stocked'],
     stock_remaining: ['stock_remaining', 'remaining', 'left']
   };
-// --- SHIPPING WAVES PARSER ---
-// Expects a sheet named "ShippingWaves" with columns: Wave | Progress
-function readShippingWaves(workbook) {
-  const ws = workbook.Sheets['ShippingWaves'];
-  if (!ws) return [];
-  const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
-
-  const toPct = (v) => {
-    if (v === '' || v === null || v === undefined) return null;
-    // If Excel cell is a percent-formatted number (e.g. 0.75), turn into 75
-    if (typeof v === 'number') return Math.round((v <= 1 ? v * 100 : v));
-    // If it's a string like "75%" or "75"
-    const s = String(v).trim().replace('%', '');
-    const n = Number(s);
-    if (!Number.isFinite(n)) return null;
-    return Math.round(n);
-  };
-
-  const waves = rows
-    .map(r => ({
-      wave: Number(r.Wave),
-      progress: toPct(r.Progress)
-    }))
-    .filter(r => Number.isFinite(r.wave) && Number.isFinite(r.progress));
-
-  return waves;
-}
 
   const out = {};
 
   // ----- levels -----
   for (const row of levels) {
-    const deptRaw = key(getVal(row, C.dept)).toLowerCase();
+    let deptRaw = key(getVal(row, C.dept)).toLowerCase();
     const lvlRaw  = key(getVal(row, C.level));
     if (!deptRaw || !lvlRaw) continue;
+
+    // normalize "shipping" to "ship" to match the site keys
+    if (deptRaw === 'shipping') deptRaw = 'ship';
 
     const levelKey = !isNaN(Number(lvlRaw)) ? Number(lvlRaw) : lvlRaw;
 
@@ -95,10 +102,12 @@ function readShippingWaves(workbook) {
 
   // ----- zones (optional) -----
   for (const row of zones) {
-    const deptRaw = key(getVal(row, C.dept)).toLowerCase();
+    let deptRaw = key(getVal(row, C.dept)).toLowerCase();
     const lvlRaw  = key(getVal(row, C.level));
     const zoneNum = num(getVal(row, C.zone));
     if (!deptRaw || !lvlRaw || !Number.isFinite(zoneNum)) continue;
+
+    if (deptRaw === 'shipping') deptRaw = 'ship';
 
     const levelKey = !isNaN(Number(lvlRaw)) ? Number(lvlRaw) : lvlRaw;
 
@@ -121,6 +130,14 @@ function readShippingWaves(workbook) {
     };
   }
 
+  // ----- shipping waves (new) -----
+  const waves = readShippingWaves(wb);      // pulls from the ShippingWaves sheet
+  if (waves.length) {
+    out.ship = out.ship || { levels: {} };  // ensure 'ship' exists
+    out.ship.waves = waves;                 // attach waves array
+  }
+
+  // write JSON
   fs.mkdirSync('data', { recursive: true });
   fs.writeFileSync(OUT, JSON.stringify(out, null, 2));
   console.log('Wrote', OUT);
