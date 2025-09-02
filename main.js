@@ -40,137 +40,101 @@ function setStatusDotByDataId(id, statusName) {
   el.classList.add(`status-${statusName}`);
 }
 
-/* ===== Draw a center-anchored needle aligned to the arc end ===== */
-function drawNeedleOverlay(canvasId, chart) {
-  const base = document.getElementById(canvasId);
-  if (!base || !chart) return;
+/* ===== Gauge needle plugin (draws in the same scaled ctx) ===== */
+const needlePlugin = {
+  id: 'needlePlugin',
+  afterDatasetsDraw(chart) {
+    const meta = chart.getDatasetMeta(0);
+    const arc = meta?.data?.[0];
+    if (!arc) return;
 
-  // Ensure the parent can contain absolutely positioned children
-  const parent = base.parentElement;
-  if (!parent) return;
-  if (getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
+    // Read accurate geometry from Chart.js element
+    const p = arc.getProps
+      ? arc.getProps(['x','y','innerRadius','outerRadius','endAngle'], true)
+      : { x: arc.x, y: arc.y, innerRadius: arc.innerRadius, outerRadius: arc.outerRadius, endAngle: arc.endAngle };
 
-  // Create / reuse overlay canvas
-  const overlayId = `${canvasId}-needle`;
-  let overlay = document.getElementById(overlayId);
-  if (!overlay) {
-    overlay = document.createElement('canvas');
-    overlay.id = overlayId;
-    overlay.style.position = 'absolute';
-    overlay.style.pointerEvents = 'none';
-    overlay.style.zIndex = '5';
-    parent.appendChild(overlay);
+    const { x: cx, y: cy, innerRadius, outerRadius, endAngle } = p;
+
+    // Color = first (colored) slice
+    const ds = chart.config.data.datasets[0];
+    const gaugeColor = (Array.isArray(ds.backgroundColor) ? ds.backgroundColor[0] : ds.backgroundColor) || '#2ecc71';
+
+    const ctx = chart.ctx;
+
+    // Needle geometry
+    const tipOvershoot = 6;                 // how far past the ring the tip goes
+    const headBaseInset = 6;                // head base inside outer radius
+    const shaftInsetFromCenter = 2;         // start just outside knob
+    const shaftEndInsetFromOuter = headBaseInset + 2;
+    const headSpread = 9 * Math.PI / 180;   // head width
+    const knobR = Math.max(2, (outerRadius - innerRadius) * 0.15);
+
+    const shaftStartR = knobR + shaftInsetFromCenter;
+    const shaftEndR   = Math.max(innerRadius, outerRadius - shaftEndInsetFromOuter);
+
+    const sx1 = cx + shaftStartR * Math.cos(endAngle);
+    const sy1 = cy + shaftStartR * Math.sin(endAngle);
+    const sx2 = cx + shaftEndR   * Math.cos(endAngle);
+    const sy2 = cy + shaftEndR   * Math.sin(endAngle);
+
+    // Shaft (outline + color)
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#333';
+    ctx.beginPath();
+    ctx.moveTo(sx1, sy1);
+    ctx.lineTo(sx2, sy2);
+    ctx.stroke();
+
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = gaugeColor;
+    ctx.beginPath();
+    ctx.moveTo(sx1, sy1);
+    ctx.lineTo(sx2, sy2);
+    ctx.stroke();
+
+    // Arrow head
+    const headBaseR = outerRadius - headBaseInset;
+    const tipR      = outerRadius + tipOvershoot;
+
+    const tipX = cx + tipR * Math.cos(endAngle);
+    const tipY = cy + tipR * Math.sin(endAngle);
+    const hb1X = cx + headBaseR * Math.cos(endAngle - headSpread);
+    const hb1Y = cy + headBaseR * Math.sin(endAngle - headSpread);
+    const hb2X = cx + headBaseR * Math.cos(endAngle + headSpread);
+    const hb2Y = cy + headBaseR * Math.sin(endAngle + headSpread);
+
+    ctx.beginPath();
+    ctx.moveTo(hb1X, hb1Y);
+    ctx.lineTo(tipX, tipY);
+    ctx.lineTo(hb2X, hb2Y);
+    ctx.closePath();
+    ctx.fillStyle = gaugeColor;
+    ctx.fill();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#333';
+    ctx.stroke();
+
+    // Center knob
+    ctx.beginPath();
+    ctx.arc(cx, cy, knobR, 0, Math.PI * 2);
+    ctx.fillStyle = gaugeColor;
+    ctx.fill();
+    ctx.restore();
   }
-
-  // 🔧 Align overlay to the canvas *itself*, not the parent’s (0,0)
-  overlay.style.left = `${base.offsetLeft}px`;
-  overlay.style.top  = `${base.offsetTop}px`;
-
-  // Match pixel size exactly to the canvas backing store
-  const w = base.width  || parseInt(base.getAttribute('width') || '160', 10);
-  const h = base.height || parseInt(base.getAttribute('height') || '80', 10);
-  overlay.width  = w;
-  overlay.height = h;
-
-  const ctx = overlay.getContext('2d');
-  ctx.clearRect(0, 0, overlay.width, overlay.height);
-
-  // Read true geometry from the colored slice
-  const meta = chart.getDatasetMeta(0);
-  const arc = meta?.data?.[0];
-  if (!arc) return;
-
-  const p = arc.getProps
-    ? arc.getProps(['x','y','innerRadius','outerRadius','startAngle','endAngle','circumference'], true)
-    : {
-        x: arc.x, y: arc.y,
-        innerRadius: arc.innerRadius, outerRadius: arc.outerRadius,
-        startAngle: arc.startAngle,
-        endAngle: arc.endAngle ?? ((arc.startAngle ?? (-Math.PI/2)) + (arc.circumference ?? Math.PI))
-      };
-
-  const cx = p.x ?? w/2;
-  const cy = p.y ?? h/2;
-  const innerR = p.innerRadius ?? (Math.min(w, h) / 2 * 0.7);
-  const outerR = p.outerRadius ?? (Math.min(w, h) / 2);
-  const angle  = p.endAngle; // EXACT end of colored arc
-
-  // Color-match to the gauge color
-  const ds = chart.config.data.datasets[0];
-  const gaugeColor = Array.isArray(ds.backgroundColor) ? ds.backgroundColor[0] : ds.backgroundColor;
-
-  // Needle geometry (shaft + head)
-  const tipOvershoot = 6;
-  const headBaseInset = 6;
-  const shaftInsetFromCenter = 2;
-  const shaftEndInsetFromOuter = headBaseInset + 2;
-  const headSpread = 9 * Math.PI / 180;
-  const knobR = Math.max(2, (outerR - innerR) * 0.15);
-
-  // Shaft from center to near-outer ring
-  const shaftStartR = knobR + shaftInsetFromCenter;
-  const shaftEndR   = Math.max(innerR, outerR - shaftEndInsetFromOuter);
-
-  const sx1 = cx + shaftStartR * Math.cos(angle);
-  const sy1 = cy + shaftStartR * Math.sin(angle);
-  const sx2 = cx + shaftEndR   * Math.cos(angle);
-  const sy2 = cy + shaftEndR   * Math.sin(angle);
-
-  ctx.save();
-  ctx.lineCap = 'round';
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = '#333'; // outline for contrast
-  ctx.beginPath();
-  ctx.moveTo(sx1, sy1);
-  ctx.lineTo(sx2, sy2);
-  ctx.stroke();
-
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = gaugeColor || '#2ecc71';
-  ctx.beginPath();
-  ctx.moveTo(sx1, sy1);
-  ctx.lineTo(sx2, sy2);
-  ctx.stroke();
-
-  // Arrow head at the ring boundary (aligned to the angle)
-  const headBaseR = outerR - headBaseInset;
-  const tipR      = outerR + tipOvershoot;
-
-  const tipX = cx + tipR * Math.cos(angle);
-  const tipY = cy + tipR * Math.sin(angle);
-  const hb1X = cx + headBaseR * Math.cos(angle - headSpread);
-  const hb1Y = cy + headBaseR * Math.sin(angle - headSpread);
-  const hb2X = cx + headBaseR * Math.cos(angle + headSpread);
-  const hb2Y = cy + headBaseR * Math.sin(angle + headSpread);
-
-  ctx.beginPath();
-  ctx.moveTo(hb1X, hb1Y);
-  ctx.lineTo(tipX, tipY);
-  ctx.lineTo(hb2X, hb2Y);
-  ctx.closePath();
-  ctx.fillStyle = gaugeColor || '#2ecc71';
-  ctx.fill();
-  ctx.lineWidth = 1;
-  ctx.strokeStyle = '#333';
-  ctx.stroke();
-
-  // Center knob
-  ctx.beginPath();
-  ctx.arc(cx, cy, knobR, 0, Math.PI * 2);
-  ctx.fillStyle = gaugeColor || '#2ecc71';
-  ctx.fill();
-  ctx.restore();
-}
+};
 
 /* ===== Gauges ===== */
 function renderGaugeById(canvasId, value) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
 
-  // Fix canvas size to avoid layout differences
+  // Fix canvas attribute size so Chart.js + plugin share the same coordinates
   const w = parseInt(canvas.getAttribute('width') || '160', 10);
   const h = parseInt(canvas.getAttribute('height') || '80', 10);
-  canvas.width = w; canvas.height = h;
+  canvas.width = w;
+  canvas.height = h;
 
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
@@ -180,7 +144,7 @@ function renderGaugeById(canvasId, value) {
   const val = Number(value) || 0;
   const color = perfColorHex(perfColorName(val));
 
-  const chart = charts[canvasId] = new Chart(ctx, {
+  charts[canvasId] = new Chart(ctx, {
     type: 'doughnut',
     data: {
       datasets: [{
@@ -190,8 +154,8 @@ function renderGaugeById(canvasId, value) {
       }]
     },
     options: {
-      rotation: -90,          // 12 o’clock start
-      circumference: 180,     // half circle
+      rotation: -90,
+      circumference: 180,
       cutout: '70%',
       responsive: false,
       maintainAspectRatio: false,
@@ -202,10 +166,7 @@ function renderGaugeById(canvasId, value) {
         datalabels: { display: false }
       }
     },
-    plugins: [{
-      // draw needle AFTER Chart.js finishes animating this chart
-      afterRender: (c) => drawNeedleOverlay(canvasId, c)
-    }]
+    plugins: [needlePlugin]
   });
 }
 
