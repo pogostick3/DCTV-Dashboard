@@ -3,72 +3,62 @@ if (window.ChartDataLabels) {
   Chart.register(ChartDataLabels);
 }
 
-// Needle plugin: draws a needle & center knob on each doughnut gauge
+/* --- Needle plugin: draws a radial bar across the ring + a center knob --- */
 const gaugeNeedlePlugin = {
   id: 'gaugeNeedle',
-  afterDraw(chart, args, opts) {
+  afterDatasetsDraw(chart, args, opts) {
     try {
       if (chart.config.type !== 'doughnut') return;
 
-      const dataset = chart.config.data?.datasets?.[0];
+      const ds = chart.config.data?.datasets?.[0];
       const meta = chart.getDatasetMeta(0);
       const arc = meta?.data?.[0];
-      if (!dataset || !arc) return;
+      if (!ds || !arc) return;
 
-      const value = Number(dataset.data?.[0]) || 0;
+      const value = Number(ds.data?.[0]) || 0;
 
-      // Chart.js uses degrees for rotation/circumference; canvas needs radians
-      const rotation = chart.options.rotation ?? -90; // default semi-gauge start
+      // Rotation/circumference are in degrees; convert to radians
+      const rotation = chart.options.rotation ?? -90;   // start at 12 o’clock
       const circumference = chart.options.circumference ?? 180;
       const angleRad = (rotation + (circumference * (value / 100))) * Math.PI / 180;
 
       const ctx = chart.ctx;
       const cx = arc.x;
       const cy = arc.y;
-      const r = arc.outerRadius;
+      const inner = arc.innerRadius;
+      const outer = arc.outerRadius;
+      const thickness = Math.max(2, outer - inner);
 
-      const lengthRatio = opts?.lengthRatio ?? 0.9;         // 0..1 of radius
-      const knobRadiusRatio = opts?.knobRadiusRatio ?? 0.07; // 0..1 of radius
-
-      const needleLen = r * lengthRatio;
-      const knobR = Math.max(2, r * knobRadiusRatio);
-
-      // Color needle to match gauge color thresholds
+      // Line width sized to ring thickness so it’s clearly visible across the arc
+      const lineWidth = Math.max(3, thickness * (opts?.widthRatio ?? 0.6));
       const color = perfColorHex(perfColorName(value));
 
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(angleRad);
+      // Compute radial endpoints from inner to outer radius
+      const x1 = cx + inner * Math.cos(angleRad);
+      const y1 = cy + inner * Math.sin(angleRad);
+      const x2 = cx + outer * Math.cos(angleRad);
+      const y2 = cy + outer * Math.sin(angleRad);
 
-      // Needle
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(needleLen, 0);
-      ctx.lineWidth = opts?.width ?? 3;
+      ctx.save();
       ctx.lineCap = 'round';
       ctx.strokeStyle = color;
+      ctx.lineWidth = lineWidth;
+
+      // Radial bar (needle) across the ring
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
       ctx.stroke();
 
-      // Optional tiny tail (counterweight)
-      if (opts?.tail) {
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(-r * Math.min(0.15, lengthRatio / 4), 0);
-        ctx.lineWidth = opts?.width ?? 3;
-        ctx.strokeStyle = color;
-        ctx.stroke();
-      }
-
       // Center knob
+      const knobR = Math.max(2, (opts?.knobRadiusRatio ?? 0.15) * thickness);
       ctx.beginPath();
-      ctx.arc(0, 0, knobR, 0, Math.PI * 2);
+      ctx.arc(cx, cy, knobR, 0, Math.PI * 2);
       ctx.fillStyle = color;
       ctx.fill();
 
       ctx.restore();
-    } catch (_) {
-      // Avoid breaking charts if anything goes wrong drawing the needle
-    }
+    } catch (_) { /* keep chart from breaking on any error */ }
   }
 };
 Chart.register(gaugeNeedlePlugin);
@@ -97,11 +87,10 @@ function perfColorHex(name) {
        : name === 'yellow' ? '#f1c40f'
        : '#2ecc71';
 }
-function statusFromTwo(perfA, perfB) {
-  const a = perfColorName(perfA);
-  const b = perfColorName(perfB);
-  if (a === 'red' || b === 'red') return 'red';
-  if (a === 'yellow' || b === 'yellow') return 'yellow';
+function statusFromTwo(a, b) {
+  const ca = perfColorName(a), cb = perfColorName(b);
+  if (ca === 'red' || cb === 'red') return 'red';
+  if (ca === 'yellow' || cb === 'yellow') return 'yellow';
   return 'green';
 }
 function setStatusDotByDataId(id, statusName) {
@@ -116,48 +105,42 @@ function renderGaugeById(canvasId, value) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
 
-  // Lock canvas size (prevents resize feedback loops)
+  // Fix canvas size (prevents browser/layout differences)
   const w = parseInt(canvas.getAttribute('width') || '160', 10);
   const h = parseInt(canvas.getAttribute('height') || '80', 10);
-  canvas.width = w;
-  canvas.height = h;
+  canvas.width = w; canvas.height = h;
 
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  if (charts[canvasId]) {
-    charts[canvasId].destroy();
-    charts[canvasId] = null;
-  }
+  if (charts[canvasId]) { charts[canvasId].destroy(); charts[canvasId] = null; }
 
-  const valNum = Number(value) || 0;
-  const color = perfColorHex(perfColorName(valNum));
+  const val = Number(value) || 0;
+  const color = perfColorHex(perfColorName(val));
 
   charts[canvasId] = new Chart(ctx, {
     type: 'doughnut',
     data: {
       datasets: [{
-        data: [valNum, Math.max(0, 100 - valNum)],
+        data: [val, Math.max(0, 100 - val)],
         backgroundColor: [color, '#e0e0e0'],
         borderWidth: 0
       }]
     },
     options: {
-      rotation: -90,           // start at 12 o'clock
-      circumference: 180,      // semi-circle
-      cutout: '70%',           // inner hole (controls ring thickness)
+      rotation: -90,          // start at 12 o’clock
+      circumference: 180,     // half circle
+      cutout: '70%',
       responsive: false,
       maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
         tooltip: { enabled: false },
         datalabels: { display: false },
-        // Per-chart options for the needle plugin (optional tunables)
+        // per-chart options for our needle plugin
         gaugeNeedle: {
-          lengthRatio: 0.9,        // 90% of radius
-          knobRadiusRatio: 0.07,   // 7% of radius
-          width: 3,
-          tail: false              // set true if you want a small tail
+          widthRatio: 0.6,        // how thick the radial bar is (fraction of ring thickness)
+          knobRadiusRatio: 0.15   // center knob size (fraction of ring thickness)
         }
       }
     }
@@ -167,16 +150,13 @@ function renderGaugeById(canvasId, value) {
 /* ===== HOME ===== */
 function populateMain() {
   const depts = ['mz', 'cf', 'hb', 'nc', 'rr', 'ship'];
-
   depts.forEach((deptKey) => {
     const dept = dashboardData[deptKey];
     if (!dept) return;
-
     const firstLevelKey = Object.keys(dept.levels)[0];
     if (!firstLevelKey) return;
 
     const level = dept.levels[firstLevelKey];
-
     const pickPerf  = Number(level.picking?.perf ?? 0);
     const stockPerf = Number(level.stocking?.perf ?? 0);
 
@@ -196,12 +176,11 @@ function populateMain() {
   });
 }
 
-/* ===== LEVEL PAGES ===== */
+/* ===== LEVELS ===== */
 function populateLevels_MZ() {
   [1,2,3].forEach((lvl) => {
     const level = dashboardData?.mz?.levels?.[lvl];
     if (!level) return;
-
     const pickPerf = Number(level.picking.perf);
     const stockPerf = Number(level.stocking.perf);
 
@@ -221,12 +200,10 @@ function populateLevels_MZ() {
     setStatusDotByDataId(`mz${lvl}Status`, statusFromTwo(pickPerf, stockPerf));
   });
 }
-
 function populateLevels_CF() {
   [1,2,3].forEach((lvl) => {
     const level = dashboardData?.cf?.levels?.[lvl];
     if (!level) return;
-
     const pickPerf = Number(level.picking.perf);
     const stockPerf = Number(level.stocking.perf);
 
@@ -246,12 +223,10 @@ function populateLevels_CF() {
     setStatusDotByDataId(`cf${lvl}Status`, statusFromTwo(pickPerf, stockPerf));
   });
 }
-
 function populateLevels_HB() {
   [1,2,3].forEach((lvl) => {
     const level = dashboardData?.hb?.levels?.[lvl];
     if (!level) return;
-
     const pickPerf = Number(level.picking.perf);
     const stockPerf = Number(level.stocking.perf);
 
@@ -271,12 +246,10 @@ function populateLevels_HB() {
     setStatusDotByDataId(`hb${lvl}Status`, statusFromTwo(pickPerf, stockPerf));
   });
 }
-
 function populateLevels_RR() {
   [1,2].forEach((lvl) => {
     const level = dashboardData?.rr?.levels?.[lvl];
     if (!level) return;
-
     const pickPerf = Number(level.picking.perf);
     const stockPerf = Number(level.stocking.perf);
 
@@ -296,7 +269,6 @@ function populateLevels_RR() {
     setStatusDotByDataId(`rr${lvl}Status`, statusFromTwo(pickPerf, stockPerf));
   });
 }
-
 function populateLevels_NC() {
   const map = [
     ['ncoil', 'oil'],
@@ -354,7 +326,7 @@ function populateMZZones(levelNumber) {
   });
 }
 
-/* ===== Router ===== */
+/* ===== Router / Navigation ===== */
 function populateForPage(pageId) {
   switch (pageId) {
     case 'mainPage':  return populateMain();
@@ -368,8 +340,6 @@ function populateForPage(pageId) {
     case 'mzLevel3':  return populateMZZones(3);
   }
 }
-
-/* ===== Navigation ===== */
 function navigate(pageId) {
   document.querySelectorAll('.page').forEach((p) => p.classList.remove('active'));
   const page = document.getElementById(pageId);
@@ -391,7 +361,6 @@ async function fetchAndRender(pageId = 'mainPage') {
     console.error('Failed to load data/dashboard.json:', err);
   }
 }
-
 window.addEventListener('DOMContentLoaded', () => {
   fetchAndRender('mainPage');
   if (REFRESH_MS > 0) {
