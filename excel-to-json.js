@@ -4,37 +4,77 @@ const fs = require('fs');
 const FILE = './dashboard.xlsx';      // Excel in repo root
 const OUT  = './data/dashboard.json'; // Output JSON
 
+function toNum(n) {
+  const v = Number(n);
+  return Number.isFinite(v) ? v : 0;
+}
+
 function toJson() {
   const wb = XLSX.readFile(FILE);
-  const levels = XLSX.utils.sheet_to_json(wb.Sheets['levels'] || {});
-  const zones  = XLSX.utils.sheet_to_json(wb.Sheets['zones']  || {});
+
+  const levelsRows = XLSX.utils.sheet_to_json(wb.Sheets['levels'] || {});
+  const zonesRows  = XLSX.utils.sheet_to_json(wb.Sheets['zones']  || {});
+
   const out = {};
 
-  for (const r of levels) {
-    const d = String(r.dept || '').toLowerCase();
-    const l = isNaN(r.level) ? String(r.level) : Number(r.level);
-    out[d] ??= { levels: {} };
-    out[d].levels[l] = {
-      picking: { perf:+r.pick_perf, wave:+r.pick_wave, progress:+r.pick_progress },
-      stocking:{ perf:+r.stock_perf, expected:+r.stock_expected, stocked:+r.stock_stocked, remaining:+r.stock_remaining },
-      zones: out[d].levels[l]?.zones || undefined
+  // ---- Levels sheet ----
+  for (const r of levelsRows) {
+    const dept = String(r.dept || '').trim().toLowerCase();
+    // level can be number (1,2,3) or a string (oil, pbs, ...)
+    const rawLevel = (r.level ?? '').toString().trim();
+    const levelKey = rawLevel !== '' && !Number.isNaN(Number(rawLevel))
+      ? Number(rawLevel)
+      : rawLevel;
+
+    if (!dept || rawLevel === '') continue; // skip empty rows
+
+    out[dept] ??= { levels: {} };
+
+    out[dept].levels[levelKey] = {
+      picking: {
+        perf:     toNum(r.pick_perf),
+        wave:     toNum(r.pick_wave),
+        progress: toNum(r.pick_progress),
+      },
+      stocking: {
+        perf:      toNum(r.stock_perf),
+        expected:  toNum(r.stock_expected),
+        stocked:   toNum(r.stock_stocked),
+        remaining: toNum(r.stock_remaining),
+      },
+      // IMPORTANT: start with an empty zones object so later writes are safe
+      zones: {},
     };
   }
 
-  for (const r of zones) {
-    const d = String(r.dept || '').toLowerCase();
-    const l = isNaN(r.level) ? String(r.level) : Number(r.level);
-    const z = Number(r.zone);
-    out[d] ??= { levels: {} };
-    out[d].levels[l] ??= { picking:{}, stocking:{}, zones:{} };
-    out[d].levels[l].zones[z] = {
-      picking: { perf:+r.pick_perf, wave:+r.pick_wave, progress:+r.pick_progress },
-      stocking:{ perf:+r.stock_perf, expected:+r.stock_expected, stocked:+r.stock_stocked, remaining:+r.stock_remaining }
-    };
-  }
+  // ---- Zones sheet (optional) ----
+  for (const r of zonesRows) {
+    const dept = String(r.dept || '').trim().toLowerCase();
+    const rawLevel = (r.level ?? '').toString().trim();
+    const levelKey = rawLevel !== '' && !Number.isNaN(Number(rawLevel))
+      ? Number(rawLevel)
+      : rawLevel;
+    const zone = toNum(r.zone);
 
-  fs.mkdirSync('data', { recursive: true });
-  fs.writeFileSync(OUT, JSON.stringify(out, null, 2));
-  console.log('Wrote', OUT);
-}
-toJson();
+    if (!dept || rawLevel === '' || !Number.isFinite(zone)) continue;
+
+    // Make sure containers exist even if a level row wasn't in "levels"
+    out[dept] ??= { levels: {} };
+    out[dept].levels[levelKey] ??= {
+      picking:  {},
+      stocking: {},
+      zones:    {},
+    };
+    // Ensure zones object exists before writing into it
+    out[dept].levels[levelKey].zones ??= {};
+
+    out[dept].levels[levelKey].zones[zone] = {
+      picking: {
+        perf:     toNum(r.pick_perf),
+        wave:     toNum(r.pick_wave),
+        progress: toNum(r.pick_progress),
+      },
+      stocking: {
+        perf:      toNum(r.stock_perf),
+        expected:  toNum(r.stock_expected),
+        stocked:   toNum(r.stock_stock_
