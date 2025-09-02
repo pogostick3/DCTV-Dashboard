@@ -1,7 +1,77 @@
-/* ===== Chart.js plugin (optional) ===== */
+/* ===== Chart.js plugins ===== */
 if (window.ChartDataLabels) {
   Chart.register(ChartDataLabels);
 }
+
+// Needle plugin: draws a needle & center knob on each doughnut gauge
+const gaugeNeedlePlugin = {
+  id: 'gaugeNeedle',
+  afterDraw(chart, args, opts) {
+    try {
+      if (chart.config.type !== 'doughnut') return;
+
+      const dataset = chart.config.data?.datasets?.[0];
+      const meta = chart.getDatasetMeta(0);
+      const arc = meta?.data?.[0];
+      if (!dataset || !arc) return;
+
+      const value = Number(dataset.data?.[0]) || 0;
+
+      // Chart.js uses degrees for rotation/circumference; canvas needs radians
+      const rotation = chart.options.rotation ?? -90; // default semi-gauge start
+      const circumference = chart.options.circumference ?? 180;
+      const angleRad = (rotation + (circumference * (value / 100))) * Math.PI / 180;
+
+      const ctx = chart.ctx;
+      const cx = arc.x;
+      const cy = arc.y;
+      const r = arc.outerRadius;
+
+      const lengthRatio = opts?.lengthRatio ?? 0.9;         // 0..1 of radius
+      const knobRadiusRatio = opts?.knobRadiusRatio ?? 0.07; // 0..1 of radius
+
+      const needleLen = r * lengthRatio;
+      const knobR = Math.max(2, r * knobRadiusRatio);
+
+      // Color needle to match gauge color thresholds
+      const color = perfColorHex(perfColorName(value));
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(angleRad);
+
+      // Needle
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(needleLen, 0);
+      ctx.lineWidth = opts?.width ?? 3;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = color;
+      ctx.stroke();
+
+      // Optional tiny tail (counterweight)
+      if (opts?.tail) {
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-r * Math.min(0.15, lengthRatio / 4), 0);
+        ctx.lineWidth = opts?.width ?? 3;
+        ctx.strokeStyle = color;
+        ctx.stroke();
+      }
+
+      // Center knob
+      ctx.beginPath();
+      ctx.arc(0, 0, knobR, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+
+      ctx.restore();
+    } catch (_) {
+      // Avoid breaking charts if anything goes wrong drawing the needle
+    }
+  }
+};
+Chart.register(gaugeNeedlePlugin);
 
 /* ===== Config (GitHub Pages JSON) ===== */
 const API_URL = 'data/dashboard.json';
@@ -23,10 +93,13 @@ function perfColorName(value) {
   return 'green';
 }
 function perfColorHex(name) {
-  return name === 'red' ? '#e74c3c' : name === 'yellow' ? '#f1c40f' : '#2ecc71';
+  return name === 'red' ? '#e74c3c'
+       : name === 'yellow' ? '#f1c40f'
+       : '#2ecc71';
 }
 function statusFromTwo(perfA, perfB) {
-  const a = perfColorName(perfA), b = perfColorName(perfB);
+  const a = perfColorName(perfA);
+  const b = perfColorName(perfB);
   if (a === 'red' || b === 'red') return 'red';
   if (a === 'yellow' || b === 'yellow') return 'yellow';
   return 'green';
@@ -43,25 +116,50 @@ function renderGaugeById(canvasId, value) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
 
-  // lock size to avoid feedback loops
+  // Lock canvas size (prevents resize feedback loops)
   const w = parseInt(canvas.getAttribute('width') || '160', 10);
   const h = parseInt(canvas.getAttribute('height') || '80', 10);
-  canvas.width = w; canvas.height = h;
+  canvas.width = w;
+  canvas.height = h;
 
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  if (charts[canvasId]) { charts[canvasId].destroy(); charts[canvasId] = null; }
+  if (charts[canvasId]) {
+    charts[canvasId].destroy();
+    charts[canvasId] = null;
+  }
 
-  const color = perfColorHex(perfColorName(Number(value) || 0));
+  const valNum = Number(value) || 0;
+  const color = perfColorHex(perfColorName(valNum));
 
   charts[canvasId] = new Chart(ctx, {
     type: 'doughnut',
-    data: { datasets: [{ data: [value, Math.max(0, 100 - value)], backgroundColor: [color, '#e0e0e0'], borderWidth: 0 }] },
+    data: {
+      datasets: [{
+        data: [valNum, Math.max(0, 100 - valNum)],
+        backgroundColor: [color, '#e0e0e0'],
+        borderWidth: 0
+      }]
+    },
     options: {
-      rotation: -90, circumference: 180, cutout: '70%',
-      responsive: false, maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: { enabled: false }, datalabels: { display: false } }
+      rotation: -90,           // start at 12 o'clock
+      circumference: 180,      // semi-circle
+      cutout: '70%',           // inner hole (controls ring thickness)
+      responsive: false,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: false },
+        datalabels: { display: false },
+        // Per-chart options for the needle plugin (optional tunables)
+        gaugeNeedle: {
+          lengthRatio: 0.9,        // 90% of radius
+          knobRadiusRatio: 0.07,   // 7% of radius
+          width: 3,
+          tail: false              // set true if you want a small tail
+        }
+      }
     }
   });
 }
@@ -107,11 +205,9 @@ function populateLevels_MZ() {
     const pickPerf = Number(level.picking.perf);
     const stockPerf = Number(level.stocking.perf);
 
-    // Gauges
     renderGaugeById(`mz${lvl}-picking-gauge`, pickPerf);
     renderGaugeById(`mz${lvl}-stocking-gauge`, stockPerf);
 
-    // Numbers
     setTextByDataId(`mz${lvl}Pick`, `${pickPerf}%`);
     setTextByDataId(`mz${lvl}Wave`, `${level.picking.wave}`);
     setBarWidthByDataId(`mz${lvl}Progress`, level.picking.progress);
@@ -232,7 +328,7 @@ function populateLevels_NC() {
   });
 }
 
-/* ===== ZONES (MZ only in current HTML) ===== */
+/* ===== ZONES (MZ) ===== */
 function populateMZZones(levelNumber) {
   const level = dashboardData?.mz?.levels?.[levelNumber];
   if (!level || !level.zones) return;
