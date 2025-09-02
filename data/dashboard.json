@@ -124,6 +124,21 @@
           }
         }
       }
+    },
+    "dept": {
+      "picking": {
+        "perf": 80,
+        "wave": 1,
+        "progress": 75,
+        "ordersCompleted": 750,
+        "ordersTotal": 1000
+      },
+      "stocking": {
+        "perf": 89,
+        "expected": 800,
+        "stocked": 700,
+        "remaining": 100
+      }
     }
   },
   "cf": {
@@ -169,6 +184,21 @@
           "remaining": 60
         },
         "zones": {}
+      }
+    },
+    "dept": {
+      "picking": {
+        "perf": 76,
+        "wave": 1,
+        "progress": 56,
+        "ordersCompleted": 500,
+        "ordersTotal": 900
+      },
+      "stocking": {
+        "perf": 84,
+        "expected": 780,
+        "stocked": 690,
+        "remaining": 90
       }
     }
   },
@@ -216,6 +246,21 @@
         },
         "zones": {}
       }
+    },
+    "dept": {
+      "picking": {
+        "perf": 65,
+        "wave": 3,
+        "progress": 38,
+        "ordersCompleted": 300,
+        "ordersTotal": 800
+      },
+      "stocking": {
+        "perf": 79,
+        "expected": 890,
+        "stocked": 705,
+        "remaining": 185
+      }
     }
   },
   "rr": {
@@ -247,6 +292,21 @@
           "remaining": 140
         },
         "zones": {}
+      }
+    },
+    "dept": {
+      "picking": {
+        "perf": 72,
+        "wave": 4,
+        "progress": 48,
+        "ordersCompleted": 470,
+        "ordersTotal": 970
+      },
+      "stocking": {
+        "perf": 85,
+        "expected": 970,
+        "stocked": 820,
+        "remaining": 150
       }
     }
   },
@@ -307,6 +367,21 @@
           "remaining": 100
         },
         "zones": {}
+      }
+    },
+    "dept": {
+      "picking": {
+        "perf": 88,
+        "wave": 2,
+        "progress": 36,
+        "ordersCompleted": 400,
+        "ordersTotal": 1100
+      },
+      "stocking": {
+        "perf": 90,
+        "expected": 1100,
+        "stocked": 980,
+        "remaining": 120
       }
     }
   },
