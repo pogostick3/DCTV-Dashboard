@@ -38,6 +38,33 @@ function convert() {
     stock_stocked:   ['stock_stocked', 'stocked'],
     stock_remaining: ['stock_remaining', 'remaining', 'left']
   };
+// --- SHIPPING WAVES PARSER ---
+// Expects a sheet named "ShippingWaves" with columns: Wave | Progress
+function readShippingWaves(workbook) {
+  const ws = workbook.Sheets['ShippingWaves'];
+  if (!ws) return [];
+  const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+  const toPct = (v) => {
+    if (v === '' || v === null || v === undefined) return null;
+    // If Excel cell is a percent-formatted number (e.g. 0.75), turn into 75
+    if (typeof v === 'number') return Math.round((v <= 1 ? v * 100 : v));
+    // If it's a string like "75%" or "75"
+    const s = String(v).trim().replace('%', '');
+    const n = Number(s);
+    if (!Number.isFinite(n)) return null;
+    return Math.round(n);
+  };
+
+  const waves = rows
+    .map(r => ({
+      wave: Number(r.Wave),
+      progress: toPct(r.Progress)
+    }))
+    .filter(r => Number.isFinite(r.wave) && Number.isFinite(r.progress));
+
+  return waves;
+}
 
   const out = {};
 
