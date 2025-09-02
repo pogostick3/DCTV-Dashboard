@@ -1,158 +1,126 @@
-/* ===== Chart.js datalabels (if present) ===== */
+// main.js — drop-in
+// ------------------------------------------------------------------
+// Chart.js plugin (optional)
 if (window.ChartDataLabels) {
   Chart.register(ChartDataLabels);
 }
 
-/* ===== Config (GitHub Pages JSON) ===== */
-const API_URL = 'data/dashboard.json';
-const REFRESH_MS = 0;
+// ---------------------- Globals ----------------------
+let DASH = null;           // loaded dashboard.json
+const CHARTS = new Map();  // keep references to gauges so we can replace/cleanup
 
-/* ===== State ===== */
-let dashboardData = {};
-const charts = {}; // canvasId -> Chart instance
+// ---------------------- Utils ------------------------
+const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+const setText = (sel, val) => { const el = $(sel); if (el) el.textContent = val; };
+const setDataText = (did, val) => {
+  const el = document.querySelector(`[data-id='${did}']`);
+  if (el) el.textContent = val;
+};
+const setWidthByDataId = (did, pct) => {
+  const el = document.querySelector(`[data-id='${did}']`);
+  if (el) el.style.width = `${clamp(pct || 0, 0, 100)}%`;
+};
 
-/* ===== Helpers ===== */
-const setTextByDataId = (id, v) => { const el = document.querySelector(`[data-id="${id}"]`); if (el) el.textContent = v; };
-const setBarWidthByDataId = (id, v) => { const el = document.querySelector(`[data-id="${id}"]`); if (el) el.style.width = `${v}%`; };
-const setTextById = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-const setBarWidthById = (id, v) => { const el = document.getElementById(id); if (el) el.style.width = `${v}%`; };
-
-function perfColorName(value) {
-  if (value < 75) return 'red';
-  if (value <= 90) return 'yellow';
-  return 'green';
-}
-function perfColorHex(name) {
-  return name === 'red' ? '#e74c3c'
-       : name === 'yellow' ? '#f1c40f'
-       : '#2ecc71';
-}
-function statusFromTwo(a, b) {
-  const ca = perfColorName(a), cb = perfColorName(b);
-  if (ca === 'red' || cb === 'red') return 'red';
-  if (ca === 'yellow' || cb === 'yellow') return 'yellow';
-  return 'green';
-}
-function setStatusDotByDataId(id, statusName) {
-  const el = document.querySelector(`[data-id="${id}"]`);
-  if (!el) return;
-  el.classList.remove('status-red', 'status-yellow', 'status-green');
-  el.classList.add(`status-${statusName}`);
+function perfColor(p) {
+  const v = Number(p) || 0;
+  if (v < 75) return '#e74c3c';     // red
+  if (v <= 90) return '#f1c40f';    // yellow
+  return '#2ecc71';                 // green
 }
 
-/* ===== Gauge needle plugin (draws in same scaled ctx) ===== */
+function statusFrom(perfA, perfB) {
+  const cA = perfColor(perfA);
+  const cB = perfColor(perfB);
+  // red if any red, else yellow if any yellow, else green
+  if (cA === '#e74c3c' || cB === '#e74c3c') return '#e74c3c';
+  if (cA === '#f1c40f' || cB === '#f1c40f') return '#f1c40f';
+  return '#2ecc71';
+}
+
+// ------------------ Gauge with needle -----------------
 const needlePlugin = {
-  id: 'needlePlugin',
-  afterDatasetsDraw(chart) {
+  id: 'gaugeNeedle',
+  afterDatasetsDraw(chart, args, pluginOptions) {
+    const val = (chart.config.data || {})._needleValue ?? 0;
+    const angle = -Math.PI + (clamp(val, 0, 100) / 100) * Math.PI; // -π (left) → 0 (right)
+
     const meta = chart.getDatasetMeta(0);
     const arc = meta?.data?.[0];
     if (!arc) return;
 
-    const p = arc.getProps
-      ? arc.getProps(['x','y','innerRadius','outerRadius','endAngle'], true)
-      : { x: arc.x, y: arc.y, innerRadius: arc.innerRadius, outerRadius: arc.outerRadius, endAngle: arc.endAngle };
-
-    const { x: cx, y: cy, innerRadius, outerRadius, endAngle } = p;
-
-    const ds = chart.config.data.datasets[0];
-    const gaugeColor = (Array.isArray(ds.backgroundColor) ? ds.backgroundColor[0] : ds.backgroundColor) || '#2ecc71';
+    const { x: cx, y: cy, innerRadius, outerRadius } = arc;
+    const r = (innerRadius + outerRadius) / 2;
 
     const ctx = chart.ctx;
-
-    const tipOvershoot = 6;
-    const headBaseInset = 6;
-    const shaftInsetFromCenter = 2;
-    const shaftEndInsetFromOuter = headBaseInset + 2;
-    const headSpread = 9 * Math.PI / 180;
-    const knobR = Math.max(2, (outerRadius - innerRadius) * 0.15);
-
-    const shaftStartR = knobR + shaftInsetFromCenter;
-    const shaftEndR   = Math.max(innerRadius, outerRadius - shaftEndInsetFromOuter);
-
-    const sx1 = cx + shaftStartR * Math.cos(endAngle);
-    const sy1 = cy + shaftStartR * Math.sin(endAngle);
-    const sx2 = cx + shaftEndR   * Math.cos(endAngle);
-    const sy2 = cy + shaftEndR   * Math.sin(endAngle);
-
     ctx.save();
-    ctx.lineCap = 'round';
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = '#333';
-    ctx.beginPath();
-    ctx.moveTo(sx1, sy1);
-    ctx.lineTo(sx2, sy2);
-    ctx.stroke();
 
+    // needle line
+    ctx.beginPath();
     ctx.lineWidth = 2;
-    ctx.strokeStyle = gaugeColor;
-    ctx.beginPath();
-    ctx.moveTo(sx1, sy1);
-    ctx.lineTo(sx2, sy2);
+    ctx.strokeStyle = '#555';
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
     ctx.stroke();
 
-    const headBaseR = outerRadius - headBaseInset;
-    const tipR      = outerRadius + tipOvershoot;
-
-    const tipX = cx + tipR * Math.cos(endAngle);
-    const tipY = cy + tipR * Math.sin(endAngle);
-    const hb1X = cx + headBaseR * Math.cos(endAngle - headSpread);
-    const hb1Y = cy + headBaseR * Math.sin(endAngle - headSpread);
-    const hb2X = cx + headBaseR * Math.cos(endAngle + headSpread);
-    const hb2Y = cy + headBaseR * Math.sin(endAngle + headSpread);
-
+    // arrow head (small triangle)
+    const ah = 8; // arrow length
+    const aw = 6; // arrow width
+    const tipX = cx + r * Math.cos(angle);
+    const tipY = cy + r * Math.sin(angle);
+    const leftX = tipX - ah * Math.cos(angle) + (aw / 2) * Math.cos(angle - Math.PI / 2);
+    const leftY = tipY - ah * Math.sin(angle) + (aw / 2) * Math.sin(angle - Math.PI / 2);
+    const rightX = tipX - ah * Math.cos(angle) + (aw / 2) * Math.cos(angle + Math.PI / 2);
+    const rightY = tipY - ah * Math.sin(angle) + (aw / 2) * Math.sin(angle + Math.PI / 2);
     ctx.beginPath();
-    ctx.moveTo(hb1X, hb1Y);
-    ctx.lineTo(tipX, tipY);
-    ctx.lineTo(hb2X, hb2Y);
+    ctx.fillStyle = '#777';
+    ctx.moveTo(tipX, tipY);
+    ctx.lineTo(leftX, leftY);
+    ctx.lineTo(rightX, rightY);
     ctx.closePath();
-    ctx.fillStyle = gaugeColor;
     ctx.fill();
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = '#333';
-    ctx.stroke();
 
+    // center dot
     ctx.beginPath();
-    ctx.arc(cx, cy, knobR, 0, Math.PI * 2);
-    ctx.fillStyle = gaugeColor;
+    ctx.fillStyle = '#555';
+    ctx.arc(cx, cy, 3, 0, 2 * Math.PI);
     ctx.fill();
+
     ctx.restore();
   }
 };
 
-/* ===== Gauges ===== */
-function renderGaugeById(canvasId, value) {
-  const canvas = document.getElementById(canvasId);
+function renderGauge(canvas, value) {
   if (!canvas) return;
-
-  const w = parseInt(canvas.getAttribute('width') || '160', 10);
-  const h = parseInt(canvas.getAttribute('height') || '80', 10);
-  canvas.width = w;
-  canvas.height = h;
-
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  if (charts[canvasId]) { charts[canvasId].destroy(); charts[canvasId] = null; }
+  // cleanup old chart on this canvas
+  if (CHARTS.has(canvas.id)) {
+    CHARTS.get(canvas.id).destroy();
+    CHARTS.delete(canvas.id);
+  }
 
-  const val = Number(value) || 0;
-  const color = perfColorHex(perfColorName(val));
+  const v = clamp(Number(value) || 0, 0, 100);
+  const color = perfColor(v);
 
-  charts[canvasId] = new Chart(ctx, {
+  const chart = new Chart(ctx, {
     type: 'doughnut',
     data: {
+      _needleValue: v,
       datasets: [{
-        data: [val, Math.max(0, 100 - val)],
+        data: [v, 100 - v],
         backgroundColor: [color, '#e0e0e0'],
         borderWidth: 0
       }]
     },
     options: {
-      rotation: -90,
-      circumference: 180,
+      rotation: -Math.PI,     // start at left
+      circumference: Math.PI, // half-circle
       cutout: '70%',
       responsive: false,
-      maintainAspectRatio: false,
-      animation: { duration: 400 },
+      animation: { duration: 300 },
       plugins: {
         legend: { display: false },
         tooltip: { enabled: false },
@@ -161,271 +129,265 @@ function renderGaugeById(canvasId, value) {
     },
     plugins: [needlePlugin]
   });
+
+  CHARTS.set(canvas.id, chart);
 }
 
-/* ===== Shipping waves renderer ===== */
-function renderShippingTile() {
-  const listEl = document.getElementById('shippingWaves');
-  if (!listEl) return;
+// -------------------- Data helpers --------------------
+function summaryFromDeptKey(deptKey) {
+  if (!DASH || !DASH[deptKey]) return null;
 
-  // grab waves array if provided; fallback to single row from picking progress
-  const ship = dashboardData?.ship;
-  const firstLevelKey = ship?.levels ? Object.keys(ship.levels)[0] : null;
-  const level = firstLevelKey ? ship.levels[firstLevelKey] : null;
+  // Prefer explicit "dept" sheet data if present (demo mode)
+  if (DASH[deptKey].dept) return DASH[deptKey].dept;
 
-  let waves = ship?.waves;
-  if (!Array.isArray(waves) || waves.length === 0) {
-    const single = Number(level?.picking?.progress ?? 0);
-    waves = [{ wave: level?.picking?.wave ?? 1, progress: single }];
-  }
+  // Fallback to the first/numeric-lowest level
+  const levels = DASH[deptKey].levels || {};
+  const keys = Object.keys(levels);
+  if (!keys.length) return null;
+  const firstKey = keys
+    .map(k => (isFinite(k) ? Number(k) : k))
+    .sort((a, b) => (typeof a === 'number' && typeof b === 'number') ? a - b : 0)[0];
 
-  listEl.innerHTML = '';
-  waves.forEach(w => {
-    const pct = Math.max(0, Math.min(100, Number(w.progress) || 0));
-    const color = perfColorHex(perfColorName(pct));
+  const lvl = levels[firstKey];
+  if (!lvl) return null;
 
-    const row = document.createElement('div');
-    row.className = 'wave-row';
-    row.innerHTML = `
-      <div class="wave-label">${w.wave}</div>
-      <div class="wave-bar"><div class="wave-fill" style="width:${pct}%; background:${color}"></div></div>
-      <div class="wave-pct">${pct}%</div>
-    `;
-    listEl.appendChild(row);
-  });
-}
-
-/* ===== HOME ===== */
-function populateMain() {
-  const depts = ['mz', 'cf', 'hb', 'nc', 'rr', 'ship'];
-  depts.forEach((deptKey) => {
-    const dept = dashboardData[deptKey];
-    if (!dept) return;
-    const firstLevelKey = Object.keys(dept.levels || {})[0];
-
-    if (deptKey === 'ship') {
-      // Render custom waves list
-      renderShippingTile();
-
-      // Status dot still based on perf numbers if present
-      const lvl = firstLevelKey ? dept.levels[firstLevelKey] : null;
-      const pickPerf  = Number(lvl?.picking?.perf ?? 0);
-      const stockPerf = Number(lvl?.stocking?.perf ?? 0);
-      setStatusDotByDataId(`shipStatus`, statusFromTwo(pickPerf, stockPerf));
-      return;
+  return {
+    picking: {
+      perf: lvl.picking?.perf ?? 0,
+      wave: lvl.picking?.wave ?? 0,
+      progress: lvl.picking?.progress ?? 0,
+      ordersCompleted: (DASH[deptKey].orders || []).find(o => o.wave === lvl.picking?.wave)?.completed ?? 0,
+      ordersTotal: (DASH[deptKey].orders || []).find(o => o.wave === lvl.picking?.wave)?.total ?? 0
+    },
+    stocking: {
+      perf: lvl.stocking?.perf ?? 0,
+      expected: lvl.stocking?.expected ?? 0,
+      stocked: lvl.stocking?.stocked ?? 0,
+      remaining: lvl.stocking?.remaining ?? 0
     }
-
-    const level = dept.levels[firstLevelKey];
-    const pickPerf  = Number(level?.picking?.perf ?? 0);
-    const stockPerf = Number(level?.stocking?.perf ?? 0);
-
-    renderGaugeById(`${deptKey}Pick`, pickPerf);
-    renderGaugeById(`${deptKey}Stock`, stockPerf);
-
-    setTextByDataId(`${deptKey}PickPerf`, `${pickPerf}%`);
-    setTextByDataId(`${deptKey}StockPerf`, `${stockPerf}%`);
-    setTextByDataId(`${deptKey}Wave`, `${level.picking?.wave ?? ''}`);
-    setBarWidthByDataId(`${deptKey}Progress`, level.picking?.progress ?? 0);
-    setTextByDataId(`${deptKey}ProgressText`, `Progress: ${level.picking?.progress ?? 0}%`);
-    setTextByDataId(`${deptKey}Expected`, `${level.stocking?.expected ?? ''}`);
-    setTextByDataId(`${deptKey}Stocked`, `${level.stocking?.stocked ?? ''}`);
-    setTextByDataId(`${deptKey}Left`, `${level.stocking?.remaining ?? ''}`);
-
-    setStatusDotByDataId(`${deptKey}Status`, statusFromTwo(pickPerf, stockPerf));
-  });
+  };
 }
 
-/* ===== LEVELS ===== */
-function populateLevels_MZ() {
-  [1,2,3].forEach((lvl) => {
-    const level = dashboardData?.mz?.levels?.[lvl];
-    if (!level) return;
-    const pickPerf = Number(level.picking.perf);
-    const stockPerf = Number(level.stocking.perf);
+// -------------------- Home tiles ----------------------
+function updateHomeFromSummary(prefix, sum) {
+  // Gauges
+  renderGauge(document.getElementById(`${prefix}Pick`), sum.picking.perf);
+  renderGauge(document.getElementById(`${prefix}Stock`), sum.stocking.perf);
 
-    renderGaugeById(`mz${lvl}-picking-gauge`, pickPerf);
-    renderGaugeById(`mz${lvl}-stocking-gauge`, stockPerf);
+  // Perf labels
+  setDataText(`${prefix}PickPerf`, `${sum.picking.perf}%`);
+  setDataText(`${prefix}StockPerf`, `${sum.stocking.perf}%`);
 
-    setTextByDataId(`mz${lvl}Pick`, `${pickPerf}%`);
-    setTextByDataId(`mz${lvl}Wave`, `${level.picking.wave}`);
-    setBarWidthByDataId(`mz${lvl}Progress`, level.picking.progress);
-    setTextByDataId(`mz${lvl}ProgressText`, `${level.picking.progress}%`);
+  // Picking column
+  setDataText(`${prefix}Wave`, `${sum.picking.wave ?? ''}`);
+  setWidthByDataId(`${prefix}Progress`, sum.picking.progress);
+  setDataText(`${prefix}ProgressText`, `Progress: ${sum.picking.progress ?? 0}%`);
+  setDataText(`${prefix}Orders`,
+    `${sum.picking.ordersCompleted ?? 0}/${sum.picking.ordersTotal ?? 0}`);
 
-    setTextByDataId(`mz${lvl}Stock`, `${stockPerf}%`);
-    setTextByDataId(`mz${lvl}Expected`, `${level.stocking.expected}`);
-    setTextByDataId(`mz${lvl}Stocked`, `${level.stocking.stocked}`);
-    setTextByDataId(`mz${lvl}Remaining`, `${level.stocking.remaining}`);
+  // Stocking column
+  setDataText(`${prefix}Expected`, `${sum.stocking.expected ?? ''}`);
+  setDataText(`${prefix}Stocked`, `${sum.stocking.stocked ?? ''}`);
+  setDataText(`${prefix}Left`, `${sum.stocking.remaining ?? ''}`);
 
-    setStatusDotByDataId(`mz${lvl}Status`, statusFromTwo(pickPerf, stockPerf));
-  });
-}
-function populateLevels_CF() {
-  [1,2,3].forEach((lvl) => {
-    const level = dashboardData?.cf?.levels?.[lvl];
-    if (!level) return;
-    const pickPerf = Number(level.picking.perf);
-    const stockPerf = Number(level.stocking.perf);
-
-    renderGaugeById(`cf${lvl}-picking-gauge`, pickPerf);
-    renderGaugeById(`cf${lvl}-stocking-gauge`, stockPerf);
-
-    setTextByDataId(`cf${lvl}Pick`, `${pickPerf}%`);
-    setTextByDataId(`cf${lvl}Wave`, `${level.picking.wave}`);
-    setBarWidthByDataId(`cf${lvl}Progress`, level.picking.progress);
-    setTextByDataId(`cf${lvl}ProgressText`, `${level.picking.progress}%`);
-
-    setTextByDataId(`cf${lvl}Stock`, `${stockPerf}%`);
-    setTextByDataId(`cf${lvl}Expected`, `${level.stocking.expected}`);
-    setTextByDataId(`cf${lvl}Stocked`, `${level.stocking.stocked}`);
-    setTextByDataId(`cf${lvl}Remaining`, `${level.stocking.remaining}`);
-
-    setStatusDotByDataId(`cf${lvl}Status`, statusFromTwo(pickPerf, stockPerf));
-  });
-}
-function populateLevels_HB() {
-  [1,2,3].forEach((lvl) => {
-    const level = dashboardData?.hb?.levels?.[lvl];
-    if (!level) return;
-    const pickPerf = Number(level.picking.perf);
-    const stockPerf = Number(level.stocking.perf);
-
-    renderGaugeById(`hb${lvl}-picking-gauge`, pickPerf);
-    renderGaugeById(`hb${lvl}-stocking-gauge`, stockPerf);
-
-    setTextByDataId(`hb${lvl}Pick`, `${pickPerf}%`);
-    setTextByDataId(`hb${lvl}Wave`, `${level.picking.wave}`);
-    setBarWidthByDataId(`hb${lvl}Progress`, level.picking.progress);
-    setTextByDataId(`hb${lvl}ProgressText`, `${level.picking.progress}%`);
-
-    setTextByDataId(`hb${lvl}Stock`, `${stockPerf}%`);
-    setTextByDataId(`hb${lvl}Expected`, `${level.stocking.expected}`);
-    setTextByDataId(`hb${lvl}Stocked`, `${level.stocking.stocked}`);
-    setTextByDataId(`hb${lvl}Remaining`, `${level.stocking.remaining}`);
-
-    setStatusDotByDataId(`hb${lvl}Status`, statusFromTwo(pickPerf, stockPerf));
-  });
-}
-function populateLevels_RR() {
-  [1,2].forEach((lvl) => {
-    const level = dashboardData?.rr?.levels?.[lvl];
-    if (!level) return;
-    const pickPerf = Number(level.picking.perf);
-    const stockPerf = Number(level.stocking.perf);
-
-    renderGaugeById(`rr${lvl}-picking-gauge`, pickPerf);
-    renderGaugeById(`rr${lvl}-stocking-gauge`, stockPerf);
-
-    setTextByDataId(`rr${lvl}Pick`, `${pickPerf}%`);
-    setTextByDataId(`rr${lvl}Wave`, `${level.picking.wave}`);
-    setBarWidthByDataId(`rr${lvl}Progress`, level.picking.progress);
-    setTextByDataId(`rr${lvl}ProgressText`, `${level.picking.progress}%`);
-
-    setTextByDataId(`rr${lvl}Stock`, `${stockPerf}%`);
-    setTextByDataId(`rr${lvl}Expected`, `${level.stocking.expected}`);
-    setTextByDataId(`rr${lvl}Stocked`, `${level.stocking.stocked}`);
-    setTextByDataId(`rr${lvl}Remaining`, `${level.stocking.remaining}`);
-
-    setStatusDotByDataId(`rr${lvl}Status`, `${statusFromTwo(pickPerf, stockPerf)}`);
-  });
-}
-function populateLevels_NC() {
-  const map = [
-    ['ncoil', 'oil'],
-    ['ncpbs', 'pbs'],
-    ['nchighpick', 'highPick'],
-    ['ncncrr', 'ncrr'],
-  ];
-  map.forEach(([prefix, key]) => {
-    const level = dashboardData?.nc?.levels?.[key];
-    if (!level) return;
-
-    const pickPerf = Number(level.picking.perf);
-    const stockPerf = Number(level.stocking.perf);
-
-    renderGaugeById(`${prefix}-picking-gauge`, pickPerf);
-    renderGaugeById(`${prefix}-stocking-gauge`, stockPerf);
-
-    setTextByDataId(`${prefix}Pick`, `${pickPerf}%`);
-    setTextByDataId(`${prefix}Wave`, `${level.picking.wave}`);
-    setBarWidthByDataId(`${prefix}Progress`, level.picking.progress);
-    setTextByDataId(`${prefix}ProgressText`, `${level.picking.progress}%`);
-
-    setTextByDataId(`${prefix}Stock`, `${stockPerf}%`);
-    setTextByDataId(`${prefix}Expected`, `${level.stocking.expected}`);
-    setTextByDataId(`${prefix}Stocked`, `${level.stocking.stocked}`);
-    setTextByDataId(`${prefix}Remaining`, `${level.stocking.remaining}`);
-
-    setStatusDotByDataId(`${prefix}Status`, statusFromTwo(pickPerf, stockPerf));
-  });
-}
-
-/* ===== Zones (MZ) ===== */
-function populateMZZones(levelNumber) {
-  const level = dashboardData?.mz?.levels?.[levelNumber];
-  if (!level || !level.zones) return;
-
-  Object.keys(level.zones).forEach((zKey) => {
-    const z = level.zones[zKey];
-    const pickPerf = Number(z.picking.perf);
-    const stockPerf = Number(z.stocking.perf);
-
-    renderGaugeById(`z${zKey}-picking-gauge`, pickPerf);
-    setTextById(`z${zKey}-pick-text`, `${pickPerf}%`);
-    setTextById(`z${zKey}-pick-wave`, `Current Wave: ${z.picking.wave}`);
-    setBarWidthById(`z${zKey}-pick-progress`, z.picking.progress);
-    setTextById(`z${zKey}-pick-progress-text`, `Progress: ${z.picking.progress}%`);
-
-    renderGaugeById(`z${zKey}-stocking-gauge`, stockPerf);
-    setTextById(`z${zKey}-stock-text`, `${stockPerf}%`);
-    setTextById(`z${zKey}-stock-expected`, `Expected: ${z.stocking.expected}`);
-    setTextById(`z${zKey}-stock-stocked`, `Stocked: ${z.stocking.stocked}`);
-    setTextById(`z${zKey}-stock-remaining`, `Remaining: ${z.stocking.remaining}`);
-
-    setStatusDotByDataId(`z${zKey}Status`, statusFromTwo(pickPerf, stockPerf));
-  });
-}
-
-/* ===== Router / Navigation ===== */
-function populateForPage(pageId) {
-  switch (pageId) {
-    case 'mainPage':  return populateMain();
-    case 'mzLevels':  return populateLevels_MZ();
-    case 'cfLevels':  return populateLevels_CF();
-    case 'hbLevels':  return populateLevels_HB();
-    case 'rrLevels':  return populateLevels_RR();
-    case 'ncLevels':  return populateLevels_NC();
-    case 'mzLevel1':  return populateMZZones(1);
-    case 'mzLevel2':  return populateMZZones(2);
-    case 'mzLevel3':  return populateMZZones(3);
+  // Status dot
+  const dot = document.querySelector(`[data-id='${prefix}Status']`);
+  if (dot) {
+    dot.style.backgroundColor = statusFrom(sum.picking.perf, sum.stocking.perf);
   }
 }
+
+function populateHome() {
+  const depts = ['mz', 'cf', 'hb', 'nc', 'rr'];
+  depts.forEach((d) => {
+    const summary = summaryFromDeptKey(d);
+    if (summary) updateHomeFromSummary(d, summary);
+  });
+
+  // Shipping waves list (if you added the custom tile)
+  const waves = DASH?.ship?.waves || [];
+  const waveList = document.getElementById('shipWaveList') || document.querySelector('[data-id="shipWaveList"]');
+  if (waveList) {
+    waveList.innerHTML = '';
+    waves
+      .slice() // copy
+      .sort((a, b) => a.wave - b.wave)
+      .forEach(w => {
+        const row = document.createElement('div');
+        row.className = 'ship-wave-row';
+        row.style.margin = '6px 0';
+
+        const label = document.createElement('div');
+        label.textContent = `Wave ${w.wave}: ${clamp(w.progress, 0, 100)}%`;
+        label.style.fontSize = '0.95em';
+        label.style.marginBottom = '4px';
+
+        const bar = document.createElement('div');
+        bar.className = 'progress-bar';
+        const fill = document.createElement('div');
+        fill.className = 'progress-fill';
+        fill.style.width = `${clamp(w.progress, 0, 100)}%`;
+        bar.appendChild(fill);
+
+        row.appendChild(label);
+        row.appendChild(bar);
+        waveList.appendChild(row);
+      });
+  }
+}
+
+// ---------------- Levels & Zones (kept working) -------
+function renderLevelGauge(canvasId, value, textDataId) {
+  const c = document.getElementById(canvasId);
+  if (c) renderGauge(c, value);
+  if (textDataId) setDataText(textDataId, `${value}%`);
+}
+
+function populateLevelsPage(deptKey, mapping) {
+  // mapping: array of { levelKey, prefix } where prefix matches your data-id/canvas prefixes
+  const levels = DASH?.[deptKey]?.levels || {};
+  mapping.forEach(({ levelKey, prefix }) => {
+    const lvl = levels[levelKey];
+    if (!lvl) return;
+
+    // Gauges + center text
+    renderLevelGauge(`${prefix}-picking-gauge`, lvl.picking?.perf ?? 0, `${prefix}Pick`);
+    renderLevelGauge(`${prefix}-stocking-gauge`, lvl.stocking?.perf ?? 0, `${prefix}Stock`);
+
+    // Picking side
+    setDataText(`${prefix}Wave`, `${lvl.picking?.wave ?? ''}`);
+    setDataText(`${prefix}ProgressText`, `Progress: ${lvl.picking?.progress ?? 0}%`);
+    setWidthByDataId(`${prefix}Progress`, lvl.picking?.progress ?? 0);
+
+    // Stocking side
+    setDataText(`${prefix}Expected`, `${lvl.stocking?.expected ?? ''}`);
+    setDataText(`${prefix}Stocked`, `${lvl.stocking?.stocked ?? ''}`);
+    setDataText(`${prefix}Remaining`, `${lvl.stocking?.remaining ?? ''}`);
+  });
+}
+
+function populateZonesFromLevel(levelObj, zonesMap) {
+  if (!levelObj?.zones) return;
+  Object.entries(levelObj.zones).forEach(([z, zdata]) => {
+    // canvases
+    renderGauge(document.getElementById(`z${z}-picking-gauge`), zdata.picking?.perf ?? 0);
+    renderGauge(document.getElementById(`z${z}-stocking-gauge`), zdata.stocking?.perf ?? 0);
+    // center texts
+    setText(`#z${z}-pick-text`, `${zdata.picking?.perf ?? 0}%`);
+    setText(`#z${z}-stock-text`, `${zdata.stocking?.perf ?? 0}%`);
+    // picking details
+    setText(`#z${z}-pick-wave`, `Current Wave: ${zdata.picking?.wave ?? ''}`);
+    setText(`#z${z}-pick-progress-text`, `Progress: ${zdata.picking?.progress ?? 0}%`);
+    const p = document.getElementById(`z${z}-pick-progress`);
+    if (p) p.style.width = `${clamp(zdata.picking?.progress ?? 0, 0, 100)}%`;
+    // stocking details
+    setText(`#z${z}-stock-expected`, `Expected: ${zdata.stocking?.expected ?? ''}`);
+    setText(`#z${z}-stock-stocked`, `Stocked: ${zdata.stocking?.stocked ?? ''}`);
+    setText(`#z${z}-stock-remaining`, `Remaining: ${zdata.stocking?.remaining ?? ''}`);
+  });
+}
+
+// ---------------- Page routing ------------------------
+function activePageId() {
+  const p = document.querySelector('.page.active');
+  return p ? p.id : '';
+}
+
+function populateCurrentPage() {
+  const id = activePageId();
+  if (!id || !DASH) return;
+
+  if (id === 'mainPage') {
+    populateHome();
+    return;
+  }
+
+  // MZ Levels & Zones
+  if (id === 'mzLevels') {
+    populateLevelsPage('mz', [
+      { levelKey: 1, prefix: 'mz1' },
+      { levelKey: 2, prefix: 'mz2' },
+      { levelKey: 3, prefix: 'mz3' }
+    ]);
+    return;
+  }
+  if (id === 'mzLevel1') populateZonesFromLevel(DASH?.mz?.levels?.[1]);
+  if (id === 'mzLevel2') populateZonesFromLevel(DASH?.mz?.levels?.[2]);
+  if (id === 'mzLevel3') populateZonesFromLevel(DASH?.mz?.levels?.[3]);
+
+  // CF Levels
+  if (id === 'cfLevels') {
+    populateLevelsPage('cf', [
+      { levelKey: 1, prefix: 'cf1' },
+      { levelKey: 2, prefix: 'cf2' },
+      { levelKey: 3, prefix: 'cf3' }
+    ]);
+    return;
+  }
+
+  // HB Levels
+  if (id === 'hbLevels') {
+    populateLevelsPage('hb', [
+      { levelKey: 1, prefix: 'hb1' },
+      { levelKey: 2, prefix: 'hb2' },
+      { levelKey: 3, prefix: 'hb3' }
+    ]);
+    return;
+  }
+
+  // RR Levels
+  if (id === 'rrLevels') {
+    populateLevelsPage('rr', [
+      { levelKey: 1, prefix: 'rr1' },
+      { levelKey: 2, prefix: 'rr2' }
+    ]);
+    return;
+  }
+
+  // NC has named levels
+  if (id === 'ncLevels') {
+    const lv = DASH?.nc?.levels || {};
+    const map = [
+      { key: 'oil',      prefix: 'ncoil' },
+      { key: 'pbs',      prefix: 'ncpbs' },
+      { key: 'highPick', prefix: 'nchighpick' },
+      { key: 'ncrr',     prefix: 'ncncrr' }
+    ];
+    map.forEach(({ key, prefix }) => {
+      const lvl = lv[key];
+      if (!lvl) return;
+      renderLevelGauge(`${prefix}-picking-gauge`, lvl.picking?.perf ?? 0, `${prefix}Pick`);
+      renderLevelGauge(`${prefix}-stocking-gauge`, lvl.stocking?.perf ?? 0, `${prefix}Stock`);
+      setDataText(`${prefix}Wave`, `${lvl.picking?.wave ?? ''}`);
+      setDataText(`${prefix}ProgressText`, `Progress: ${lvl.picking?.progress ?? 0}%`);
+      setWidthByDataId(`${prefix}Progress`, lvl.picking?.progress ?? 0);
+      setDataText(`${prefix}Expected`, `${lvl.stocking?.expected ?? ''}`);
+      setDataText(`${prefix}Stocked`, `${lvl.stocking?.stocked ?? ''}`);
+      setDataText(`${prefix}Remaining`, `${lvl.stocking?.remaining ?? ''}`);
+    });
+    return;
+  }
+}
+
 function navigate(pageId) {
   document.querySelectorAll('.page').forEach((p) => p.classList.remove('active'));
-  const page = document.getElementById(pageId);
-  if (page) {
-    page.classList.add('active');
-    populateForPage(pageId);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
+  const el = document.getElementById(pageId);
+  if (el) el.classList.add('active');
+  // re-render charts/content for the newly visible page
+  setTimeout(populateCurrentPage, 0);
 }
-window.navigate = navigate;
 
-/* ===== Fetch + boot ===== */
-async function fetchAndRender(pageId = 'mainPage') {
+// --------------- Boot ------------------
+window.addEventListener('DOMContentLoaded', async () => {
   try {
-    const res = await fetch(`${API_URL}?t=${Date.now()}`, { cache: 'no-store' });
-    dashboardData = await res.json();
-    populateForPage(pageId);
-  } catch (err) {
-    console.error('Failed to load data/dashboard.json:', err);
+    const res = await fetch('data/dashboard.json', { cache: 'no-store' });
+    DASH = await res.json();
+  } catch (e) {
+    console.error('Failed to load dashboard.json', e);
+    DASH = null;
   }
-}
-window.addEventListener('DOMContentLoaded', () => {
-  fetchAndRender('mainPage');
-  if (REFRESH_MS > 0) {
-    setInterval(() => {
-      const active = document.querySelector('.page.active')?.id || 'mainPage';
-      fetchAndRender(active);
-    }, REFRESH_MS);
-  }
+  populateCurrentPage(); // draw what's visible
 });
+
+// expose navigate globally for onclick handlers in HTML
+window.navigate = navigate;
