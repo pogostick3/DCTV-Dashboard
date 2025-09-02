@@ -3,62 +3,78 @@ if (window.ChartDataLabels) {
   Chart.register(ChartDataLabels);
 }
 
-/* --- Needle plugin: draws a radial bar across the ring + a center knob --- */
+/* --- Robust needle plugin (works across browsers / Chart.js v4) --- */
 const gaugeNeedlePlugin = {
   id: 'gaugeNeedle',
   afterDatasetsDraw(chart, args, opts) {
     try {
       if (chart.config.type !== 'doughnut') return;
 
-      const ds = chart.config.data?.datasets?.[0];
       const meta = chart.getDatasetMeta(0);
       const arc = meta?.data?.[0];
-      if (!ds || !arc) return;
+      const ds = chart.config.data?.datasets?.[0];
+      if (!arc || !ds) return;
 
-      const value = Number(ds.data?.[0]) || 0;
+      const val = Number(ds.data?.[0]) || 0;
 
-      // Rotation/circumference are in degrees; convert to radians
-      const rotation = chart.options.rotation ?? -90;   // start at 12 o’clock
-      const circumference = chart.options.circumference ?? 180;
-      const angleRad = (rotation + (circumference * (value / 100))) * Math.PI / 180;
+      // Safely read geometry (v4 uses getProps for animated values)
+      const props = arc.getProps
+        ? arc.getProps(['x','y','innerRadius','outerRadius'], true)
+        : { x: arc.x, y: arc.y, innerRadius: arc.innerRadius, outerRadius: arc.outerRadius };
 
-      const ctx = chart.ctx;
-      const cx = arc.x;
-      const cy = arc.y;
-      const inner = arc.innerRadius;
-      const outer = arc.outerRadius;
-      const thickness = Math.max(2, outer - inner);
+      let { x: cx, y: cy, innerRadius: inner, outerRadius: outer } = props;
 
-      // Line width sized to ring thickness so it’s clearly visible across the arc
-      const lineWidth = Math.max(3, thickness * (opts?.widthRatio ?? 0.6));
-      const color = perfColorHex(perfColorName(value));
+      // Fallbacks if any are missing
+      if (!outer) {
+        const ca = chart.chartArea;
+        outer = Math.min(ca.right - ca.left, ca.bottom - ca.top) / 2;
+      }
+      if (!inner) {
+        // Respect cutout if it’s a percentage; otherwise assume 70%
+        const cut = chart.options.cutout ?? '70%';
+        let cutRatio = 0.7;
+        if (typeof cut === 'string' && cut.endsWith('%')) cutRatio = Math.max(0, Math.min(1, parseFloat(cut) / 100));
+        inner = outer * cutRatio;
+      }
 
-      // Compute radial endpoints from inner to outer radius
+      const rotation = chart.options.rotation ?? -90;      // degrees
+      const circumference = chart.options.circumference ?? 180; // degrees
+      const angleRad = (rotation + (circumference * (val / 100))) * Math.PI / 180;
+
+      // Endpoints across the ring (inner -> outer)
       const x1 = cx + inner * Math.cos(angleRad);
       const y1 = cy + inner * Math.sin(angleRad);
       const x2 = cx + outer * Math.cos(angleRad);
       const y2 = cy + outer * Math.sin(angleRad);
 
-      ctx.save();
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = color;
-      ctx.lineWidth = lineWidth;
+      const ringThickness = Math.max(2, outer - inner);
+      const lineWidth = Math.max(3, ringThickness * (opts?.widthRatio ?? 0.6));
+      const knobR = Math.max(2, ringThickness * (opts?.knobRadiusRatio ?? 0.15));
 
-      // Radial bar (needle) across the ring
+      const color =
+        val < 75 ? '#e74c3c' : (val <= 90 ? '#f1c40f' : '#2ecc71');
+
+      const ctx = chart.ctx;
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = lineWidth;
+      ctx.lineCap = 'round';
+
+      // Radial bar across the ring
       ctx.beginPath();
       ctx.moveTo(x1, y1);
       ctx.lineTo(x2, y2);
       ctx.stroke();
 
       // Center knob
-      const knobR = Math.max(2, (opts?.knobRadiusRatio ?? 0.15) * thickness);
       ctx.beginPath();
       ctx.arc(cx, cy, knobR, 0, Math.PI * 2);
-      ctx.fillStyle = color;
       ctx.fill();
-
       ctx.restore();
-    } catch (_) { /* keep chart from breaking on any error */ }
+    } catch {
+      /* do nothing – don’t break charts */
+    }
   }
 };
 Chart.register(gaugeNeedlePlugin);
@@ -105,7 +121,7 @@ function renderGaugeById(canvasId, value) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
 
-  // Fix canvas size (prevents browser/layout differences)
+  // Fix canvas size to avoid layout-specific differences
   const w = parseInt(canvas.getAttribute('width') || '160', 10);
   const h = parseInt(canvas.getAttribute('height') || '80', 10);
   canvas.width = w; canvas.height = h;
@@ -128,7 +144,7 @@ function renderGaugeById(canvasId, value) {
       }]
     },
     options: {
-      rotation: -90,          // start at 12 o’clock
+      rotation: -90,          // 12 o’clock start
       circumference: 180,     // half circle
       cutout: '70%',
       responsive: false,
@@ -137,10 +153,10 @@ function renderGaugeById(canvasId, value) {
         legend: { display: false },
         tooltip: { enabled: false },
         datalabels: { display: false },
-        // per-chart options for our needle plugin
+        // options for our needle plugin (can tweak)
         gaugeNeedle: {
-          widthRatio: 0.6,        // how thick the radial bar is (fraction of ring thickness)
-          knobRadiusRatio: 0.15   // center knob size (fraction of ring thickness)
+          widthRatio: 0.6,
+          knobRadiusRatio: 0.15
         }
       }
     }
