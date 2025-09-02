@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Warehouse Scoreboard</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -11,16 +11,18 @@
 </head>
 <body>
 
-  <!-- ====== MAIN DASHBOARD ====== -->
+  <!-- HOME -->
   <div id="mainPage" class="page active">
     <div class="header">Warehouse Dashboard</div>
-
     <div class="tile-container">
-      <div class="tile-row">
 
+      <div class="tile-row">
         <!-- MZ -->
         <div class="tile" onclick="navigate('mzLevels')">
-          <h3>MZ</h3>
+          <div class="tile-header">
+            <h3>MZ</h3>
+            <div class="status-dot" data-id="mzStatus"></div>
+          </div>
           <div class="gauges horizontal">
             <div>
               <div class="metrics">Picking Perf: <span class="metric" data-id="mzPickPerf"></span></div>
@@ -41,7 +43,10 @@
 
         <!-- CF -->
         <div class="tile" onclick="navigate('cfLevels')">
-          <h3>CF</h3>
+          <div class="tile-header">
+            <h3>CF</h3>
+            <div class="status-dot" data-id="cfStatus"></div>
+          </div>
           <div class="gauges horizontal">
             <div>
               <div class="metrics">Picking Perf: <span class="metric" data-id="cfPickPerf"></span></div>
@@ -62,7 +67,10 @@
 
         <!-- HB -->
         <div class="tile" onclick="navigate('hbLevels')">
-          <h3>HB</h3>
+          <div class="tile-header">
+            <h3>HB</h3>
+            <div class="status-dot" data-id="hbStatus"></div>
+          </div>
           <div class="gauges horizontal">
             <div>
               <div class="metrics">Picking Perf: <span class="metric" data-id="hbPickPerf"></span></div>
@@ -85,7 +93,10 @@
       <div class="tile-row">
         <!-- NC -->
         <div class="tile" onclick="navigate('ncLevels')">
-          <h3>NC</h3>
+          <div class="tile-header">
+            <h3>NC</h3>
+            <div class="status-dot" data-id="ncStatus"></div>
+          </div>
           <div class="gauges horizontal">
             <div>
               <div class="metrics">Picking Perf: <span class="metric" data-id="ncPickPerf"></span></div>
@@ -106,7 +117,10 @@
 
         <!-- RR -->
         <div class="tile" onclick="navigate('rrLevels')">
-          <h3>RR</h3>
+          <div class="tile-header">
+            <h3>RR</h3>
+            <div class="status-dot" data-id="rrStatus"></div>
+          </div>
           <div class="gauges horizontal">
             <div>
               <div class="metrics">Picking Perf: <span class="metric" data-id="rrPickPerf"></span></div>
@@ -127,7 +141,10 @@
 
         <!-- Shipping -->
         <div class="tile" onclick="navigate('shipLevels')">
-          <h3>Shipping</h3>
+          <div class="tile-header">
+            <h3>Shipping</h3>
+            <div class="status-dot" data-id="shipStatus"></div>
+          </div>
           <div class="gauges horizontal">
             <div>
               <div class="metrics">Picking Perf: <span class="metric" data-id="shipPickPerf"></span></div>
@@ -149,20 +166,19 @@
     </div>
   </div>
 
-  <!-- ====== LEVEL PAGES ====== -->
-
-  <!-- MZ Levels -->
+  <!-- ===== MZ Levels ===== -->
   <div class="page" id="mzLevels">
     <div class="header">MZ Levels <button onclick="navigate('mainPage')">Home</button></div>
     <div class="levels-container-vertical">
+      <!-- Level 1 -->
       <div class="level-tile" onclick="navigate('mzLevel1')">
-        <div class="tile-header"><h2 class="level-title">MZ Level 1</h2><div class="status-dot status-yellow"></div></div>
+        <div class="tile-header"><h2 class="level-title">MZ Level 1</h2><div class="status-dot" data-id="mz1Status"></div></div>
         <div class="dual-section">
           <div class="sub-section">
             <div class="left">
               <h3>Picking</h3>
-              <div class="gauge-wrap">
-                <canvas id="mz1-picking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="mz1-picking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="mz1Pick"></div>
               </div>
             </div>
@@ -177,8 +193,8 @@
           <div class="sub-section">
             <div class="left">
               <h3>Stocking</h3>
-              <div class="gauge-wrap">
-                <canvas id="mz1-stocking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="mz1-stocking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="mz1Stock"></div>
               </div>
             </div>
@@ -191,15 +207,15 @@
           </div>
         </div>
       </div>
-
+      <!-- Level 2 -->
       <div class="level-tile" onclick="navigate('mzLevel2')">
-        <div class="tile-header"><h2 class="level-title">MZ Level 2</h2><div class="status-dot status-yellow"></div></div>
+        <div class="tile-header"><h2 class="level-title">MZ Level 2</h2><div class="status-dot" data-id="mz2Status"></div></div>
         <div class="dual-section">
           <div class="sub-section">
             <div class="left">
               <h3>Picking</h3>
-              <div class="gauge-wrap">
-                <canvas id="mz2-picking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="mz2-picking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="mz2Pick"></div>
               </div>
             </div>
@@ -214,8 +230,8 @@
           <div class="sub-section">
             <div class="left">
               <h3>Stocking</h3>
-              <div class="gauge-wrap">
-                <canvas id="mz2-stocking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="mz2-stocking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="mz2Stock"></div>
               </div>
             </div>
@@ -228,15 +244,15 @@
           </div>
         </div>
       </div>
-
+      <!-- Level 3 -->
       <div class="level-tile" onclick="navigate('mzLevel3')">
-        <div class="tile-header"><h2 class="level-title">MZ Level 3</h2><div class="status-dot status-yellow"></div></div>
+        <div class="tile-header"><h2 class="level-title">MZ Level 3</h2><div class="status-dot" data-id="mz3Status"></div></div>
         <div class="dual-section">
           <div class="sub-section">
             <div class="left">
               <h3>Picking</h3>
-              <div class="gauge-wrap">
-                <canvas id="mz3-picking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="mz3-picking-gauge" width="150" height="75"></"></canvas>
                 <div class="performance-metric" data-id="mz3Pick"></div>
               </div>
             </div>
@@ -251,8 +267,8 @@
           <div class="sub-section">
             <div class="left">
               <h3>Stocking</h3>
-              <div class="gauge-wrap">
-                <canvas id="mz3-stocking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="mz3-stocking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="mz3Stock"></div>
               </div>
             </div>
@@ -265,22 +281,21 @@
           </div>
         </div>
       </div>
-
     </div>
   </div>
 
-  <!-- CF Levels -->
+  <!-- ===== CF Levels ===== -->
   <div class="page" id="cfLevels">
     <div class="header">CF Levels <button onclick="navigate('mainPage')">Home</button></div>
     <div class="levels-container-vertical">
       <div class="level-tile" onclick="navigate('cfLevel1')">
-        <div class="tile-header"><h2 class="level-title">CF Level 1</h2><div class="status-dot status-yellow"></div></div>
+        <div class="tile-header"><h2 class="level-title">CF Level 1</h2><div class="status-dot" data-id="cf1Status"></div></div>
         <div class="dual-section">
           <div class="sub-section">
             <div class="left">
               <h3>Picking</h3>
-              <div class="gauge-wrap">
-                <canvas id="cf1-picking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="cf1-picking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="cf1Pick"></div>
               </div>
             </div>
@@ -295,8 +310,8 @@
           <div class="sub-section">
             <div class="left">
               <h3>Stocking</h3>
-              <div class="gauge-wrap">
-                <canvas id="cf1-stocking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="cf1-stocking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="cf1Stock"></div>
               </div>
             </div>
@@ -311,13 +326,13 @@
       </div>
 
       <div class="level-tile" onclick="navigate('cfLevel2')">
-        <div class="tile-header"><h2 class="level-title">CF Level 2</h2><div class="status-dot status-yellow"></div></div>
+        <div class="tile-header"><h2 class="level-title">CF Level 2</h2><div class="status-dot" data-id="cf2Status"></div></div>
         <div class="dual-section">
           <div class="sub-section">
             <div class="left">
               <h3>Picking</h3>
-              <div class="gauge-wrap">
-                <canvas id="cf2-picking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="cf2-picking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="cf2Pick"></div>
               </div>
             </div>
@@ -332,8 +347,8 @@
           <div class="sub-section">
             <div class="left">
               <h3>Stocking</h3>
-              <div class="gauge-wrap">
-                <canvas id="cf2-stocking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="cf2-stocking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="cf2Stock"></div>
               </div>
             </div>
@@ -348,13 +363,13 @@
       </div>
 
       <div class="level-tile" onclick="navigate('cfLevel3')">
-        <div class="tile-header"><h2 class="level-title">CF Level 3</h2><div class="status-dot status-yellow"></div></div>
+        <div class="tile-header"><h2 class="level-title">CF Level 3</h2><div class="status-dot" data-id="cf3Status"></div></div>
         <div class="dual-section">
           <div class="sub-section">
             <div class="left">
               <h3>Picking</h3>
-              <div class="gauge-wrap">
-                <canvas id="cf3-picking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="cf3-picking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="cf3Pick"></div>
               </div>
             </div>
@@ -369,8 +384,8 @@
           <div class="sub-section">
             <div class="left">
               <h3>Stocking</h3>
-              <div class="gauge-wrap">
-                <canvas id="cf3-stocking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="cf3-stocking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="cf3Stock"></div>
               </div>
             </div>
@@ -387,18 +402,17 @@
     </div>
   </div>
 
-  <!-- HB Levels -->
+  <!-- ===== HB Levels ===== -->
   <div class="page" id="hbLevels">
     <div class="header">HB Levels <button onclick="navigate('mainPage')">Home</button></div>
     <div class="levels-container-vertical">
       <div class="level-tile" onclick="navigate('hbLevel1')">
-        <div class="tile-header"><h2 class="level-title">HB Level 1</h2><div class="status-dot status-yellow"></div></div>
+        <div class="tile-header"><h2 class="level-title">HB Level 1</h2><div class="status-dot" data-id="hb1Status"></div></div>
         <div class="dual-section">
           <div class="sub-section">
-            <div class="left">
-              <h3>Picking</h3>
-              <div class="gauge-wrap">
-                <canvas id="hb1-picking-gauge" width="160" height="80"></canvas>
+            <div class="left"><h3>Picking</h3>
+              <div style="position: relative;">
+                <canvas id="hb1-picking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="hb1Pick"></div>
               </div>
             </div>
@@ -411,10 +425,9 @@
           </div>
           <div class="subsection-separator"></div>
           <div class="sub-section">
-            <div class="left">
-              <h3>Stocking</h3>
-              <div class="gauge-wrap">
-                <canvas id="hb1-stocking-gauge" width="160" height="80"></canvas>
+            <div class="left"><h3>Stocking</h3>
+              <div style="position: relative;">
+                <canvas id="hb1-stocking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="hb1Stock"></div>
               </div>
             </div>
@@ -429,13 +442,12 @@
       </div>
 
       <div class="level-tile" onclick="navigate('hbLevel2')">
-        <div class="tile-header"><h2 class="level-title">HB Level 2</h2><div class="status-dot status-yellow"></div></div>
+        <div class="tile-header"><h2 class="level-title">HB Level 2</h2><div class="status-dot" data-id="hb2Status"></div></div>
         <div class="dual-section">
           <div class="sub-section">
-            <div class="left">
-              <h3>Picking</h3>
-              <div class="gauge-wrap">
-                <canvas id="hb2-picking-gauge" width="160" height="80"></canvas>
+            <div class="left"><h3>Picking</h3>
+              <div style="position: relative;">
+                <canvas id="hb2-picking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="hb2Pick"></div>
               </div>
             </div>
@@ -448,10 +460,9 @@
           </div>
           <div class="subsection-separator"></div>
           <div class="sub-section">
-            <div class="left">
-              <h3>Stocking</h3>
-              <div class="gauge-wrap">
-                <canvas id="hb2-stocking-gauge" width="160" height="80"></canvas>
+            <div class="left"><h3>Stocking</h3>
+              <div style="position: relative;">
+                <canvas id="hb2-stocking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="hb2Stock"></div>
               </div>
             </div>
@@ -466,13 +477,12 @@
       </div>
 
       <div class="level-tile" onclick="navigate('hbLevel3')">
-        <div class="tile-header"><h2 class="level-title">HB Level 3</h2><div class="status-dot status-yellow"></div></div>
+        <div class="tile-header"><h2 class="level-title">HB Level 3</h2><div class="status-dot" data-id="hb3Status"></div></div>
         <div class="dual-section">
           <div class="sub-section">
-            <div class="left">
-              <h3>Picking</h3>
-              <div class="gauge-wrap">
-                <canvas id="hb3-picking-gauge" width="160" height="80"></canvas>
+            <div class="left"><h3>Picking</h3>
+              <div style="position: relative;">
+                <canvas id="hb3-picking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="hb3Pick"></div>
               </div>
             </div>
@@ -485,10 +495,9 @@
           </div>
           <div class="subsection-separator"></div>
           <div class="sub-section">
-            <div class="left">
-              <h3>Stocking</h3>
-              <div class="gauge-wrap">
-                <canvas id="hb3-stocking-gauge" width="160" height="80"></canvas>
+            <div class="left"><h3>Stocking</h3>
+              <div style="position: relative;">
+                <canvas id="hb3-stocking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="hb3Stock"></div>
               </div>
             </div>
@@ -505,18 +514,17 @@
     </div>
   </div>
 
-  <!-- RR Levels -->
+  <!-- ===== RR Levels ===== -->
   <div class="page" id="rrLevels">
     <div class="header">RR Levels <button onclick="navigate('mainPage')">Home</button></div>
     <div class="levels-container-vertical">
       <div class="level-tile" onclick="navigate('rrLevel1')">
-        <div class="tile-header"><h2 class="level-title">RR Level 1</h2><div class="status-dot status-yellow"></div></div>
+        <div class="tile-header"><h2 class="level-title">RR Level 1</h2><div class="status-dot" data-id="rr1Status"></div></div>
         <div class="dual-section">
           <div class="sub-section">
-            <div class="left">
-              <h3>Picking</h3>
-              <div class="gauge-wrap">
-                <canvas id="rr1-picking-gauge" width="160" height="80"></canvas>
+            <div class="left"><h3>Picking</h3>
+              <div style="position: relative;">
+                <canvas id="rr1-picking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="rr1Pick"></div>
               </div>
             </div>
@@ -529,10 +537,9 @@
           </div>
           <div class="subsection-separator"></div>
           <div class="sub-section">
-            <div class="left">
-              <h3>Stocking</h3>
-              <div class="gauge-wrap">
-                <canvas id="rr1-stocking-gauge" width="160" height="80"></canvas>
+            <div class="left"><h3>Stocking</h3>
+              <div style="position: relative;">
+                <canvas id="rr1-stocking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="rr1Stock"></div>
               </div>
             </div>
@@ -547,13 +554,12 @@
       </div>
 
       <div class="level-tile" onclick="navigate('rrLevel2')">
-        <div class="tile-header"><h2 class="level-title">RR Level 2</h2><div class="status-dot status-yellow"></div></div>
+        <div class="tile-header"><h2 class="level-title">RR Level 2</h2><div class="status-dot" data-id="rr2Status"></div></div>
         <div class="dual-section">
           <div class="sub-section">
-            <div class="left">
-              <h3>Picking</h3>
-              <div class="gauge-wrap">
-                <canvas id="rr2-picking-gauge" width="160" height="80"></canvas>
+            <div class="left"><h3>Picking</h3>
+              <div style="position: relative;">
+                <canvas id="rr2-picking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="rr2Pick"></div>
               </div>
             </div>
@@ -566,10 +572,9 @@
           </div>
           <div class="subsection-separator"></div>
           <div class="sub-section">
-            <div class="left">
-              <h3>Stocking</h3>
-              <div class="gauge-wrap">
-                <canvas id="rr2-stocking-gauge" width="160" height="80"></canvas>
+            <div class="left"><h3>Stocking</h3>
+              <div style="position: relative;">
+                <canvas id="rr2-stocking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="rr2Stock"></div>
               </div>
             </div>
@@ -586,17 +591,17 @@
     </div>
   </div>
 
-  <!-- NC Levels -->
+  <!-- ===== NC Levels ===== -->
   <div class="page" id="ncLevels">
     <div class="header">NC Levels <button onclick="navigate('mainPage')">Home</button></div>
     <div class="levels-container-vertical">
       <div class="level-tile" onclick="navigate('ncLevel1')">
-        <div class="tile-header"><h2 class="level-title">NC - Oil</h2><div class="status-dot status-yellow"></div></div>
+        <div class="tile-header"><h2 class="level-title">NC - Oil</h2><div class="status-dot" data-id="ncoilStatus"></div></div>
         <div class="dual-section">
           <div class="sub-section">
             <div class="left"><h3>Picking</h3>
-              <div class="gauge-wrap">
-                <canvas id="ncoil-picking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="ncoil-picking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="ncoilPick"></div>
               </div>
             </div>
@@ -610,8 +615,8 @@
           <div class="subsection-separator"></div>
           <div class="sub-section">
             <div class="left"><h3>Stocking</h3>
-              <div class="gauge-wrap">
-                <canvas id="ncoil-stocking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="ncoil-stocking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="ncoilStock"></div>
               </div>
             </div>
@@ -626,12 +631,12 @@
       </div>
 
       <div class="level-tile" onclick="navigate('ncLevel2')">
-        <div class="tile-header"><h2 class="level-title">NC - PBS</h2><div class="status-dot status-yellow"></div></div>
+        <div class="tile-header"><h2 class="level-title">NC - PBS</h2><div class="status-dot" data-id="ncpbsStatus"></div></div>
         <div class="dual-section">
           <div class="sub-section">
             <div class="left"><h3>Picking</h3>
-              <div class="gauge-wrap">
-                <canvas id="ncpbs-picking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="ncpbs-picking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="ncpbsPick"></div>
               </div>
             </div>
@@ -645,8 +650,8 @@
           <div class="subsection-separator"></div>
           <div class="sub-section">
             <div class="left"><h3>Stocking</h3>
-              <div class="gauge-wrap">
-                <canvas id="ncpbs-stocking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="ncpbs-stocking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="ncpbsStock"></div>
               </div>
             </div>
@@ -661,12 +666,12 @@
       </div>
 
       <div class="level-tile" onclick="navigate('ncLevel3')">
-        <div class="tile-header"><h2 class="level-title">NC - High Pick</h2><div class="status-dot status-yellow"></div></div>
+        <div class="tile-header"><h2 class="level-title">NC - High Pick</h2><div class="status-dot" data-id="nchighpickStatus"></div></div>
         <div class="dual-section">
           <div class="sub-section">
             <div class="left"><h3>Picking</h3>
-              <div class="gauge-wrap">
-                <canvas id="nchighpick-picking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="nchighpick-picking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="nchighpickPick"></div>
               </div>
             </div>
@@ -680,8 +685,8 @@
           <div class="subsection-separator"></div>
           <div class="sub-section">
             <div class="left"><h3>Stocking</h3>
-              <div class="gauge-wrap">
-                <canvas id="nchighpick-stocking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="nchighpick-stocking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="nchighpickStock"></div>
               </div>
             </div>
@@ -696,12 +701,12 @@
       </div>
 
       <div class="level-tile" onclick="navigate('ncLevel4')">
-        <div class="tile-header"><h2 class="level-title">NC - NCRR</h2><div class="status-dot status-yellow"></div></div>
+        <div class="tile-header"><h2 class="level-title">NC - NCRR</h2><div class="status-dot" data-id="ncncrrStatus"></div></div>
         <div class="dual-section">
           <div class="sub-section">
             <div class="left"><h3>Picking</h3>
-              <div class="gauge-wrap">
-                <canvas id="ncncrr-picking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="ncncrr-picking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="ncncrrPick"></div>
               </div>
             </div>
@@ -715,8 +720,8 @@
           <div class="subsection-separator"></div>
           <div class="sub-section">
             <div class="left"><h3>Stocking</h3>
-              <div class="gauge-wrap">
-                <canvas id="ncncrr-stocking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="ncncrr-stocking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" data-id="ncncrrStock"></div>
               </div>
             </div>
@@ -733,18 +738,21 @@
     </div>
   </div>
 
-  <!-- ====== ZONES (MZ) ====== -->
+  <!-- ===== MZ Level 1 Zones ===== -->
   <div class="page" id="mzLevel1">
     <div class="header">MZ Level 1 Zones <button onclick="navigate('mzLevels')">Back</button></div>
     <div class="tile-row">
       <!-- Zone 10 -->
       <div class="level-tile">
-        <div class="tile-header"><h2 class="level-title">Zone 10</h2><div class="status-dot status-green"></div></div>
+        <div class="tile-header">
+          <h2 class="level-title">Zone 10</h2>
+          <div class="status-dot" data-id="z10Status"></div>
+        </div>
         <div class="dual-section">
           <div class="sub-section">
             <div class="left"><h3>Picking</h3>
-              <div class="gauge-wrap">
-                <canvas id="z10-picking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="z10-picking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" id="z10-pick-text"></div>
               </div>
             </div>
@@ -758,8 +766,8 @@
           <div class="subsection-separator"></div>
           <div class="sub-section">
             <div class="left"><h3>Stocking</h3>
-              <div class="gauge-wrap">
-                <canvas id="z10-stocking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="z10-stocking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" id="z10-stock-text"></div>
               </div>
             </div>
@@ -775,12 +783,15 @@
 
       <!-- Zone 11 -->
       <div class="level-tile">
-        <div class="tile-header"><h2 class="level-title">Zone 11</h2><div class="status-dot status-yellow"></div></div>
+        <div class="tile-header">
+          <h2 class="level-title">Zone 11</h2>
+          <div class="status-dot" data-id="z11Status"></div>
+        </div>
         <div class="dual-section">
           <div class="sub-section">
             <div class="left"><h3>Picking</h3>
-              <div class="gauge-wrap">
-                <canvas id="z11-picking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="z11-picking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" id="z11-pick-text"></div>
               </div>
             </div>
@@ -794,8 +805,8 @@
           <div class="subsection-separator"></div>
           <div class="sub-section">
             <div class="left"><h3>Stocking</h3>
-              <div class="gauge-wrap">
-                <canvas id="z11-stocking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="z11-stocking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" id="z11-stock-text"></div>
               </div>
             </div>
@@ -812,17 +823,21 @@
     </div>
   </div>
 
+  <!-- ===== MZ Level 2 Zones ===== -->
   <div class="page" id="mzLevel2">
     <div class="header">MZ Level 2 Zones <button onclick="navigate('mzLevels')">Back</button></div>
     <div class="tile-row">
       <!-- Zone 20 -->
       <div class="level-tile">
-        <div class="tile-header"><h2 class="level-title">Zone 20</h2><div class="status-dot status-green"></div></div>
+        <div class="tile-header">
+          <h2 class="level-title">Zone 20</h2>
+          <div class="status-dot" data-id="z20Status"></div>
+        </div>
         <div class="dual-section">
           <div class="sub-section">
             <div class="left"><h3>Picking</h3>
-              <div class="gauge-wrap">
-                <canvas id="z20-picking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="z20-picking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" id="z20-pick-text"></div>
               </div>
             </div>
@@ -836,8 +851,8 @@
           <div class="subsection-separator"></div>
           <div class="sub-section">
             <div class="left"><h3>Stocking</h3>
-              <div class="gauge-wrap">
-                <canvas id="z20-stocking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="z20-stocking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" id="z20-stock-text"></div>
               </div>
             </div>
@@ -853,12 +868,15 @@
 
       <!-- Zone 21 -->
       <div class="level-tile">
-        <div class="tile-header"><h2 class="level-title">Zone 21</h2><div class="status-dot status-red"></div></div>
+        <div class="tile-header">
+          <h2 class="level-title">Zone 21</h2>
+          <div class="status-dot" data-id="z21Status"></div>
+        </div>
         <div class="dual-section">
           <div class="sub-section">
             <div class="left"><h3>Picking</h3>
-              <div class="gauge-wrap">
-                <canvas id="z21-picking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="z21-picking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" id="z21-pick-text"></div>
               </div>
             </div>
@@ -872,8 +890,8 @@
           <div class="subsection-separator"></div>
           <div class="sub-section">
             <div class="left"><h3>Stocking</h3>
-              <div class="gauge-wrap">
-                <canvas id="z21-stocking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="z21-stocking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" id="z21-stock-text"></div>
               </div>
             </div>
@@ -890,17 +908,21 @@
     </div>
   </div>
 
+  <!-- ===== MZ Level 3 Zones ===== -->
   <div class="page" id="mzLevel3">
     <div class="header">MZ Level 3 Zones <button onclick="navigate('mzLevels')">Back</button></div>
     <div class="tile-row">
       <!-- Zone 30 -->
       <div class="level-tile">
-        <div class="tile-header"><h2 class="level-title">Zone 30</h2><div class="status-dot status-green"></div></div>
+        <div class="tile-header">
+          <h2 class="level-title">Zone 30</h2>
+          <div class="status-dot" data-id="z30Status"></div>
+        </div>
         <div class="dual-section">
           <div class="sub-section">
             <div class="left"><h3>Picking</h3>
-              <div class="gauge-wrap">
-                <canvas id="z30-picking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="z30-picking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" id="z30-pick-text"></div>
               </div>
             </div>
@@ -914,8 +936,8 @@
           <div class="subsection-separator"></div>
           <div class="sub-section">
             <div class="left"><h3>Stocking</h3>
-              <div class="gauge-wrap">
-                <canvas id="z30-stocking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="z30-stocking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" id="z30-stock-text"></div>
               </div>
             </div>
@@ -931,12 +953,15 @@
 
       <!-- Zone 31 -->
       <div class="level-tile">
-        <div class="tile-header"><h2 class="level-title">Zone 31</h2><div class="status-dot status-green"></div></div>
+        <div class="tile-header">
+          <h2 class="level-title">Zone 31</h2>
+          <div class="status-dot" data-id="z31Status"></div>
+        </div>
         <div class="dual-section">
           <div class="sub-section">
             <div class="left"><h3>Picking</h3>
-              <div class="gauge-wrap">
-                <canvas id="z31-picking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="z31-picking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" id="z31-pick-text"></div>
               </div>
             </div>
@@ -950,8 +975,8 @@
           <div class="subsection-separator"></div>
           <div class="sub-section">
             <div class="left"><h3>Stocking</h3>
-              <div class="gauge-wrap">
-                <canvas id="z31-stocking-gauge" width="160" height="80"></canvas>
+              <div style="position: relative;">
+                <canvas id="z31-stocking-gauge" width="150" height="75"></canvas>
                 <div class="performance-metric" id="z31-stock-text"></div>
               </div>
             </div>
