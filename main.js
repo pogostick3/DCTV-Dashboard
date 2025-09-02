@@ -93,6 +93,13 @@ const needlePlugin = {
 
 function renderGauge(canvas, value) {
   if (!canvas) return;
+
+  // --- lock a real drawing size (prevents the "skinny line" bug) ---
+  const W = Number(canvas.dataset.w) || 160;  // allow override via data-w / data-h
+  const H = Number(canvas.dataset.h) || 100;
+  if (canvas.width !== W)  canvas.width  = W;
+  if (canvas.height !== H) canvas.height = H;
+
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
@@ -116,10 +123,11 @@ function renderGauge(canvas, value) {
       }]
     },
     options: {
-      rotation: -Math.PI,     // start at left
-      circumference: Math.PI, // half-circle
+      rotation: -Math.PI,        // start at left
+      circumference: Math.PI,    // half-circle
       cutout: '70%',
-      responsive: false,
+      responsive: false,         // we control size via width/height above
+      maintainAspectRatio: false,
       animation: { duration: 300 },
       plugins: {
         legend: { display: false },
@@ -132,6 +140,7 @@ function renderGauge(canvas, value) {
 
   CHARTS.set(canvas.id, chart);
 }
+
 
 // -------------------- Data helpers --------------------
 function summaryFromDeptKey(deptKey) {
