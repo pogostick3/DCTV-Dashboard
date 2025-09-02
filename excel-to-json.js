@@ -2,8 +2,8 @@
 const XLSX = require('xlsx');
 const fs = require('fs');
 
-const FILE = './dashboard.xlsx';       // Excel in repo root
-const OUT  = './data/dashboard.json';  // Output JSON
+const FILE = './dashboard.xlsx';
+const OUT  = './data/dashboard.json';
 
 // ---------- helpers ----------
 const num = v => (Number.isFinite(Number(v)) ? Number(v) : 0);
@@ -11,9 +11,7 @@ const key = s => String(s ?? '').trim();
 
 // pull a value from a row using multiple possible header names
 function getVal(row, candidates) {
-  // try exact keys first
   for (const k of candidates) if (row[k] !== undefined) return row[k];
-  // then try normalized keys: lowercase + remove spaces/underscores
   const norm = {};
   for (const k in row) norm[k.toLowerCase().replace(/[\s_]/g, '')] = row[k];
   for (const k of candidates) {
@@ -23,25 +21,19 @@ function getVal(row, candidates) {
   return undefined;
 }
 
+function toPct(v) {
+  if (v === '' || v === null || v === undefined) return 0;
+  if (typeof v === 'number') return Math.round((v <= 1 ? v * 100 : v));
+  const s = String(v).trim().replace('%', '');
+  const n = Number(s);
+  return Number.isFinite(n) ? Math.round(n) : 0;
+}
+
 // parse the ShippingWaves sheet (Wave | Progress)
 function readShippingWaves(workbook) {
   const ws = workbook.Sheets['ShippingWaves'];
   if (!ws) return [];
   const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
-
-  const toPct = (v) => {
-    if (v === '' || v === null || v === undefined) return null;
-    if (typeof v === 'number') {
-      // If Excel cell is a percent (0.75), convert to 75
-      return Math.round((v <= 1 ? v * 100 : v));
-    }
-    // Accept "75%" or "75"
-    const s = String(v).trim().replace('%', '');
-    const n = Number(s);
-    if (!Number.isFinite(n)) return null;
-    return Math.round(n);
-  };
-
   return rows
     .map(r => ({
       wave: Number(r.Wave),
@@ -50,12 +42,84 @@ function readShippingWaves(workbook) {
     .filter(r => Number.isFinite(r.wave) && Number.isFinite(r.progress));
 }
 
+// parse Orders sheet (Dept | Wave | Total | Completed) – optional, keep for backward compat
+function readOrders(workbook) {
+  const ws = workbook.Sheets['Orders'];
+  if (!ws) return {};
+  const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+  const byDept = {};
+  for (const r of rows) {
+    let dept = String(r.Dept ?? r.dept ?? '').trim().toLowerCase();
+    if (!dept) continue;
+    if (dept === 'shipping') dept = 'ship';
+
+    const wave = Number(r.Wave ?? r.wave);
+    const total = Number(r.Total ?? r.total);
+    const completed = Number(r.Completed ?? r.completed);
+
+    if (!Number.isFinite(wave)) continue;
+    if (!byDept[dept]) byDept[dept] = {};
+    byDept[dept][wave] = {
+      wave,
+      total: Number.isFinite(total) ? total : 0,
+      completed: Number.isFinite(completed) ? completed : 0
+    };
+  }
+  return byDept;
+}
+
+// NEW: parse dept sheet for home page data
+function readDeptSummary(workbook) {
+  const ws = workbook.Sheets['dept'];
+  if (!ws) return {};
+  const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+  const C = {
+    dept: ['dept','department'],
+    pick_perf: ['pick_perf','picking_perf','pickperf','pickingperf'],
+    stock_perf: ['stock_perf','stocking_perf','stockperf','stockingperf'],
+    wave: ['wave','current_wave','pick_wave'],
+    progress: ['progress','pick_progress','picking_progress'],
+    orders_completed: ['orders_completed','completed_orders','ordersdone'],
+    orders_total: ['orders_total','total_orders','orderstotal'],
+    expected: ['expected','stock_expected'],
+    stocked: ['stocked','stock_stocked'],
+    remaining: ['remaining','stock_remaining','left']
+  };
+
+  const out = {};
+  for (const row of rows) {
+    let dept = key(getVal(row, C.dept)).toLowerCase();
+    if (!dept) continue;
+    if (dept === 'shipping') dept = 'ship';
+
+    out[dept] = {
+      picking: {
+        perf: toPct(getVal(row, C.pick_perf)),
+        wave: num(getVal(row, C.wave)),
+        progress: toPct(getVal(row, C.progress)),
+        ordersCompleted: num(getVal(row, C.orders_completed)),
+        ordersTotal: num(getVal(row, C.orders_total))
+      },
+      stocking: {
+        perf: toPct(getVal(row, C.stock_perf)),
+        expected: num(getVal(row, C.expected)),
+        stocked: num(getVal(row, C.stocked)),
+        remaining: num(getVal(row, C.remaining))
+      }
+    };
+  }
+  return out; // { mz:{picking:{...},stocking:{...}}, cf:{...}, ... }
+}
+
 // ---------- main conversion ----------
 function convert() {
   const wb = XLSX.readFile(FILE);
 
   const levels = XLSX.utils.sheet_to_json(wb.Sheets['levels'] || {});
   const zones  = XLSX.utils.sheet_to_json(wb.Sheets['zones']  || {});
+  const out = {};
 
   const C = {
     dept:            ['dept', 'department'],
@@ -70,17 +134,12 @@ function convert() {
     stock_remaining: ['stock_remaining', 'remaining', 'left']
   };
 
-  const out = {};
-
-  // ----- levels -----
+  // levels
   for (const row of levels) {
     let deptRaw = key(getVal(row, C.dept)).toLowerCase();
     const lvlRaw  = key(getVal(row, C.level));
     if (!deptRaw || !lvlRaw) continue;
-
-    // normalize "shipping" to "ship" to match the site keys
     if (deptRaw === 'shipping') deptRaw = 'ship';
-
     const levelKey = !isNaN(Number(lvlRaw)) ? Number(lvlRaw) : lvlRaw;
 
     out[deptRaw] = out[deptRaw] || { levels: {} };
@@ -100,7 +159,7 @@ function convert() {
     };
   }
 
-  // ----- zones (optional) -----
+  // zones (optional)
   for (const row of zones) {
     let deptRaw = key(getVal(row, C.dept)).toLowerCase();
     const lvlRaw  = key(getVal(row, C.level));
@@ -108,7 +167,6 @@ function convert() {
     if (!deptRaw || !lvlRaw || !Number.isFinite(zoneNum)) continue;
 
     if (deptRaw === 'shipping') deptRaw = 'ship';
-
     const levelKey = !isNaN(Number(lvlRaw)) ? Number(lvlRaw) : lvlRaw;
 
     out[deptRaw] = out[deptRaw] || { levels: {} };
@@ -130,14 +188,29 @@ function convert() {
     };
   }
 
-  // ----- shipping waves (new) -----
-  const waves = readShippingWaves(wb);      // pulls from the ShippingWaves sheet
+  // shipping waves (optional)
+  const waves = readShippingWaves(wb);
   if (waves.length) {
-    out.ship = out.ship || { levels: {} };  // ensure 'ship' exists
-    out.ship.waves = waves;                 // attach waves array
+    out.ship = out.ship || { levels: {} };
+    out.ship.waves = waves;
   }
 
-  // write JSON
+  // orders sheet (optional)
+  const ordersByDept = readOrders(wb);
+  for (const dept of Object.keys(ordersByDept)) {
+    out[dept] = out[dept] || { levels: {} };
+    const wavesObj = ordersByDept[dept];
+    const wavesArr = Object.keys(wavesObj).map(k => wavesObj[k]).sort((a,b) => a.wave - b.wave);
+    out[dept].orders = wavesArr;
+  }
+
+  // NEW: dept sheet for home tiles
+  const deptHome = readDeptSummary(wb); // { mz:{...}, cf:{...}, ... }
+  for (const dept of Object.keys(deptHome)) {
+    out[dept] = out[dept] || { levels: {} };
+    out[dept].dept = deptHome[dept]; // picking/stocking for home page
+  }
+
   fs.mkdirSync('data', { recursive: true });
   fs.writeFileSync(OUT, JSON.stringify(out, null, 2));
   console.log('Wrote', OUT);
