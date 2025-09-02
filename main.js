@@ -1,96 +1,7 @@
-/* ===== Chart.js plugins ===== */
+/* ===== Chart.js datalabels (if present) ===== */
 if (window.ChartDataLabels) {
   Chart.register(ChartDataLabels);
 }
-
-/* --- Triangle needle plugin (robust across browsers / Chart.js v4) --- */
-const gaugeNeedlePlugin = {
-  id: 'gaugeNeedle',
-  afterDatasetsDraw(chart, args, opts) {
-    try {
-      if (chart.config.type !== 'doughnut') return;
-
-      const meta = chart.getDatasetMeta(0);
-      const arc = meta?.data?.[0];
-      const ds = chart.config.data?.datasets?.[0];
-      if (!arc || !ds) return;
-
-      const val = Number(ds.data?.[0]) || 0;
-
-      // Safely read geometry (handles v4 animated values)
-      const p = arc.getProps
-        ? arc.getProps(['x','y','innerRadius','outerRadius'], true)
-        : { x: arc.x, y: arc.y, innerRadius: arc.innerRadius, outerRadius: arc.outerRadius };
-
-      let cx = p.x, cy = p.y, inner = p.innerRadius, outer = p.outerRadius;
-
-      // Fallbacks if any missing
-      if (!outer) {
-        const ca = chart.chartArea;
-        outer = Math.min(ca.right - ca.left, ca.bottom - ca.top) / 2;
-      }
-      if (!inner) {
-        const cut = chart.options.cutout ?? '70%';
-        let cutRatio = 0.7;
-        if (typeof cut === 'string' && cut.endsWith('%')) cutRatio = Math.max(0, Math.min(1, parseFloat(cut) / 100));
-        inner = outer * cutRatio;
-      }
-
-      // Angle for the value (degrees -> radians)
-      const rotation = chart.options.rotation ?? -90;      // degrees
-      const circumference = chart.options.circumference ?? 180; // degrees
-      const angle = (rotation + (circumference * (val / 100))) * Math.PI / 180;
-
-      // Triangle pointer geometry
-      const ringThickness = Math.max(2, outer - inner);
-      const tipOvershoot = opts?.tipOvershoot ?? 6;      // px beyond outer edge
-      const baseInset    = opts?.baseInset ?? 4;         // px inside inner edge
-      const tipR  = outer + tipOvershoot;
-      const baseR = Math.max(1, inner - baseInset);
-      const delta = (opts?.tipAngleDeg ?? 8) * Math.PI / 180; // angular spread of triangle tip
-
-      // Triangle points
-      const tipX = cx + tipR * Math.cos(angle);
-      const tipY = cy + tipR * Math.sin(angle);
-      const b1X = cx + baseR * Math.cos(angle - delta);
-      const b1Y = cy + baseR * Math.sin(angle - delta);
-      const b2X = cx + baseR * Math.cos(angle + delta);
-      const b2Y = cy + baseR * Math.sin(angle + delta);
-
-      const color =
-        val < 75 ? '#e74c3c' : (val <= 90 ? '#f1c40f' : '#2ecc71');
-
-      const ctx = chart.ctx;
-      ctx.save();
-      ctx.globalCompositeOperation = 'source-over';
-
-      // Filled triangle (needle)
-      ctx.beginPath();
-      ctx.moveTo(b1X, b1Y);
-      ctx.lineTo(tipX, tipY);
-      ctx.lineTo(b2X, b2Y);
-      ctx.closePath();
-      ctx.fillStyle = color;
-      ctx.fill();
-
-      // Optional subtle outline to pop against the arc
-      ctx.lineWidth = 1;
-      ctx.strokeStyle = '#333';
-      ctx.stroke();
-
-      // Center knob
-      const knobR = Math.max(2, ringThickness * (opts?.knobRadiusRatio ?? 0.15));
-      ctx.beginPath();
-      ctx.arc(cx, cy, knobR, 0, Math.PI * 2);
-      ctx.fillStyle = color;
-      ctx.fill();
-      ctx.restore();
-    } catch {
-      /* keep chart from breaking on any error */
-    }
-  }
-};
-Chart.register(gaugeNeedlePlugin);
 
 /* ===== Config (GitHub Pages JSON) ===== */
 const API_URL = 'data/dashboard.json';
@@ -129,12 +40,95 @@ function setStatusDotByDataId(id, statusName) {
   el.classList.add(`status-${statusName}`);
 }
 
+/* ===== Draw a triangle pointer on an overlay canvas ===== */
+function drawNeedleOverlay(canvasId, value) {
+  const base = document.getElementById(canvasId);
+  if (!base) return;
+
+  // Ensure parent can position overlay
+  const parent = base.parentElement;
+  if (!parent) return;
+  if (getComputedStyle(parent).position === 'static') {
+    parent.style.position = 'relative';
+  }
+
+  // Create or reuse overlay canvas
+  const overlayId = `${canvasId}-needle`;
+  let overlay = document.getElementById(overlayId);
+  if (!overlay) {
+    overlay = document.createElement('canvas');
+    overlay.id = overlayId;
+    overlay.style.position = 'absolute';
+    overlay.style.left = '0';
+    overlay.style.top = '0';
+    overlay.style.pointerEvents = 'none';
+    overlay.style.zIndex = '5';
+    parent.appendChild(overlay);
+  }
+
+  // Match sizes exactly
+  const w = parseInt(base.getAttribute('width') || base.width || 160, 10);
+  const h = parseInt(base.getAttribute('height') || base.height || 80, 10);
+  overlay.width = w;
+  overlay.height = h;
+
+  const ctx = overlay.getContext('2d');
+  ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+  // Geometry assumption for our semi-doughnut:
+  // center at (w/2, h), radius ~ w/2, arc spans -90..+90°
+  const r = Math.min(w / 2, h);
+  const cx = w / 2;
+  const cy = h;
+
+  // Angle for value
+  const angle = (-90 + (180 * (Number(value) || 0) / 100)) * Math.PI / 180;
+
+  // Triangle pointer that overhangs the ring
+  const tipOvershoot = 6;   // px beyond outer edge
+  const baseInset = 4;      // px inside inner edge (~ cutout 70%)
+  const innerR = r * 0.7;   // cutout '70%'
+  const tipR = r + tipOvershoot;
+  const baseR = Math.max(1, innerR - baseInset);
+  const spread = 8 * Math.PI / 180; // tip angular width
+
+  const tipX = cx + tipR * Math.cos(angle);
+  const tipY = cy + tipR * Math.sin(angle);
+  const b1X = cx + baseR * Math.cos(angle - spread);
+  const b1Y = cy + baseR * Math.sin(angle - spread);
+  const b2X = cx + baseR * Math.cos(angle + spread);
+  const b2Y = cy + baseR * Math.sin(angle + spread);
+
+  const color = perfColorHex(perfColorName(value));
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(b1X, b1Y);
+  ctx.lineTo(tipX, tipY);
+  ctx.lineTo(b2X, b2Y);
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+  // subtle outline for contrast
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = '#333';
+  ctx.stroke();
+
+  // center knob
+  const knobR = Math.max(2, (r - innerR) * 0.15);
+  ctx.beginPath();
+  ctx.arc(cx, cy, knobR, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.restore();
+}
+
 /* ===== Gauges ===== */
 function renderGaugeById(canvasId, value) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
 
-  // Fix canvas size to avoid layout-specific differences
+  // Fix canvas size to avoid layout differences
   const w = parseInt(canvas.getAttribute('width') || '160', 10);
   const h = parseInt(canvas.getAttribute('height') || '80', 10);
   canvas.width = w; canvas.height = h;
@@ -165,16 +159,15 @@ function renderGaugeById(canvasId, value) {
       plugins: {
         legend: { display: false },
         tooltip: { enabled: false },
-        datalabels: { display: false },
-        // options for our needle plugin (tweak if you like)
-        gaugeNeedle: {
-          tipOvershoot: 6,
-          baseInset: 4,
-          tipAngleDeg: 8,
-          knobRadiusRatio: 0.15
-        }
+        datalabels: { display: false }
       }
-    }
+    },
+    plugins: [{
+      // draw needle AFTER Chart.js finishes animating this chart
+      afterRender: (chart) => {
+        drawNeedleOverlay(canvasId, val);
+      }
+    }]
   });
 }
 
@@ -297,7 +290,7 @@ function populateLevels_RR() {
     setTextByDataId(`rr${lvl}Stocked`, `${level.stocking.stocked}`);
     setTextByDataId(`rr${lvl}Remaining`, `${level.stocking.remaining}`);
 
-    setStatusDotByDataId(`rr${lvl}Status`, statusFromTwo(pickPerf, stockPerf));
+    setStatusDotByDataId(`rr${lvl}Status`, `${statusFromTwo(pickPerf, stockPerf)}`);
   });
 }
 function populateLevels_NC() {
