@@ -1,8 +1,8 @@
 const XLSX = require('xlsx');
 const fs = require('fs');
 
-const FILE = './dashboard.xlsx';      // your Excel lives in repo root
-const OUT  = './data/dashboard.json'; // Action writes JSON here
+const FILE = './dashboard.xlsx';      // Excel in repo root
+const OUT  = './data/dashboard.json'; // Output JSON
 
 function toJson() {
   const wb = XLSX.readFile(FILE);
@@ -37,5 +37,4 @@ function toJson() {
   fs.writeFileSync(OUT, JSON.stringify(out, null, 2));
   console.log('Wrote', OUT);
 }
-
 toJson();
