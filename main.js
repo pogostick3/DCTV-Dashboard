@@ -1,237 +1,246 @@
-// main.js — fixed gauges, shipping list, always-on status dots
+/* ====== tiny helpers ====== */
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const setText = (idOrData, v) => {
+  const el = document.querySelector(`[data-id="${idOrData}"]`);
+  if (el) el.textContent = v;
+};
+const setWidth = (idOrData, pct) => {
+  const el = document.querySelector(`[data-id="${idOrData}"]`);
+  if (el) el.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+};
 
-if (window.ChartDataLabels) Chart.register(ChartDataLabels);
+function navigate(id) {
+  $$('.page').forEach(p => p.classList.remove('active'));
+  $(`#${id}`)?.classList.add('active');
+  window.scrollTo(0,0);
+}
+window.navigate = navigate;
 
-let DASH = null;
-const CHARTS = new Map();
+/* ====== Chart.js gauge factory (fixes sliver issue) ====== */
+const GAUGE_W = 220, GAUGE_H = 120;
+const colorFor = p => (p < 75 ? '#e74c3c' : p < 90 ? '#f1c40f' : '#2ecc71');
 
-const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
-const $ = (s) => document.querySelector(s);
-
-function perfColor(p) { p = Number(p)||0; return p<75?'#e74c3c':(p<=90?'#f1c40f':'#2ecc71'); }
-function statusFrom(a,b){ const A=perfColor(a),B=perfColor(b); if(A==='#e74c3c'||B==='#e74c3c')return'#e74c3c'; if(A==='#f1c40f'||B==='#f1c40f')return'#f1c40f'; return'#2ecc71'; }
-
-// ---- gauge needle plugin ----
+/* Draw a small triangle needle on top of the doughnut */
 const needlePlugin = {
-  id:'gaugeNeedle',
-  afterDatasetsDraw(chart){
-    const v=(chart.config.data||{})._needleValue||0;
-    const angle=-Math.PI + (clamp(v,0,100)/100)*Math.PI;
-    const a=chart.getDatasetMeta(0)?.data?.[0]; if(!a) return;
-    const {x:cx,y:cy,innerRadius,outerRadius}=a;
-    const r=(innerRadius+outerRadius)/2;
-    const ctx=chart.ctx; ctx.save();
+  id: 'needle',
+  afterDraw(chart, _args, opts) {
+    const v = Number(opts.value ?? 0);
+    const color = opts.color || '#444';
+    const {ctx, chartArea} = chart;
+    const cx = chartArea.left + chartArea.width/2;
+    const cy = chartArea.bottom;           // center sits on bottom for a semicircle
+    const r  = Math.min(chartArea.width/2, GAUGE_H-8);
 
-    ctx.beginPath(); ctx.lineWidth=2; ctx.strokeStyle='#555';
-    ctx.moveTo(cx,cy); ctx.lineTo(cx+r*Math.cos(angle),cy+r*Math.sin(angle)); ctx.stroke();
+    const ang = (-90 + (v/100)*180) * Math.PI/180;
+    const tipX = cx + r * Math.cos(ang);
+    const tipY = cy + r * Math.sin(ang);
 
-    const tipX=cx+r*Math.cos(angle), tipY=cy+r*Math.sin(angle), ah=8, aw=6;
-    const leftX  = tipX - ah*Math.cos(angle) + (aw/2)*Math.cos(angle-Math.PI/2);
-    const leftY  = tipY - ah*Math.sin(angle) + (aw/2)*Math.sin(angle-Math.PI/2);
-    const rightX = tipX - ah*Math.cos(angle) + (aw/2)*Math.cos(angle+Math.PI/2);
-    const rightY = tipY - ah*Math.sin(angle) + (aw/2)*Math.sin(angle+Math.PI/2);
-    ctx.beginPath(); ctx.fillStyle='#777';
-    ctx.moveTo(tipX,tipY); ctx.lineTo(leftX,leftY); ctx.lineTo(rightX,rightY); ctx.closePath(); ctx.fill();
-
-    ctx.beginPath(); ctx.fillStyle='#555'; ctx.arc(cx,cy,3,0,2*Math.PI); ctx.fill();
+    ctx.save();
+    ctx.fillStyle = color;
+    // triangle needle
+    const back = 16;
+    ctx.beginPath();
+    ctx.moveTo(tipX, tipY);
+    ctx.lineTo(cx + back*Math.cos(ang + Math.PI/2), cy + back*Math.sin(ang + Math.PI/2));
+    ctx.lineTo(cx + back*Math.cos(ang - Math.PI/2), cy + back*Math.sin(ang - Math.PI/2));
+    ctx.closePath();
+    ctx.fill();
+    // hub
+    ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI*2); ctx.fill();
     ctx.restore();
   }
 };
+Chart.register(needlePlugin);
 
-// ---- solid, non-responsive, half-doughnut gauge ----
-function renderGauge(canvas, value){
-  if(!canvas) return;
+function makeGauge(canvasId, pct) {
+  const el = document.getElementById(canvasId);
+  if (!el) return;
+  // Hard size to avoid “sliver” responsiveness
+  el.width = GAUGE_W;
+  el.height = GAUGE_H;
 
-  // fix skinny-line bug: set real drawing size (attributes)
-  const W = Number(canvas.dataset.w) || 160;
-  const H = Number(canvas.dataset.h) || 100;
-  if (canvas.width !== W)  canvas.width  = W;
-  if (canvas.height !== H) canvas.height = H;
-
-  const ctx = canvas.getContext('2d'); if(!ctx) return;
-
-  if (CHARTS.has(canvas.id)) { CHARTS.get(canvas.id).destroy(); CHARTS.delete(canvas.id); }
-
-  const v = clamp(Number(value)||0, 0, 100);
-  const color = perfColor(v);
-
-  const chart = new Chart(ctx, {
+  const val = Math.max(0, Math.min(100, Number(pct || 0)));
+  return new Chart(el.getContext('2d'), {
     type: 'doughnut',
-    data: { _needleValue: v, datasets: [{ data:[v,100-v], backgroundColor:[color,'#e0e0e0'], borderWidth:0 }] },
+    data: {
+      datasets: [{
+        data: [val, 100 - val, 6],                   // value, remainder, tiny end-cap
+        backgroundColor: [colorFor(val), '#e5e7eb', '#d1d5db'],
+        borderWidth: 0,
+        circumference: 180,
+        rotation: -90,
+        cutout: '70%',
+        hoverOffset: 0
+      }]
+    },
     options: {
-      rotation: -Math.PI,
-      circumference: Math.PI,
-      cutout: '70%',
-      responsive: false,               // IMPORTANT: use our canvas width/height
+      responsive: false,                 // <<< stops skinny charts
       maintainAspectRatio: false,
-      animation: { duration: 250 },
-      plugins: { legend:{display:false}, tooltip:{enabled:false}, datalabels:{display:false} }
-    },
-    plugins: [needlePlugin]
-  });
-
-  CHARTS.set(canvas.id, chart);
-}
-
-// ---- data helpers ----
-function summaryFromDeptKey(deptKey){
-  if(!DASH || !DASH[deptKey]) return null;
-
-  if (DASH[deptKey].dept) return DASH[deptKey].dept; // prefer 'dept' sheet
-
-  const levels = DASH[deptKey].levels || {};
-  const keys = Object.keys(levels);
-  if(!keys.length) return null;
-  const firstKey = keys.map(k => (isFinite(k)?Number(k):k))
-                       .sort((a,b)=> (typeof a==='number'&&typeof b==='number')?a-b:0)[0];
-  const lvl = levels[firstKey];
-  if(!lvl) return null;
-
-  return {
-    picking: {
-      perf: lvl.picking?.perf ?? 0,
-      wave: lvl.picking?.wave ?? 0,
-      progress: lvl.picking?.progress ?? 0,
-      ordersCompleted: 0,
-      ordersTotal: 0
-    },
-    stocking: {
-      perf: lvl.stocking?.perf ?? 0,
-      expected: lvl.stocking?.expected ?? 0,
-      stocked: lvl.stocking?.stocked ?? 0,
-      remaining: lvl.stocking?.remaining ?? 0
+      animation: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: false },
+        needle: { value: val, color: '#555' }
+      }
     }
-  };
-}
-
-function setData(did, val){ const el = document.querySelector(`[data-id='${did}']`); if(el) el.textContent = val; }
-function setWidth(did, pct){ const el=document.querySelector(`[data-id='${did}']`); if(el) el.style.width = `${clamp(pct||0,0,100)}%`; }
-
-function updateHomeTile(prefix, sum){
-  // gauges
-  renderGauge(document.getElementById(`${prefix}Pick`),  sum.picking.perf);
-  renderGauge(document.getElementById(`${prefix}Stock`), sum.stocking.perf);
-
-  // labels
-  setData(`${prefix}PickPerf`,  `${sum.picking.perf}%`);
-  setData(`${prefix}StockPerf`, `${sum.stocking.perf}%`);
-
-  // picking column
-  setData(`${prefix}Wave`, `${sum.picking.wave ?? ''}`);
-  setWidth(`${prefix}Progress`, sum.picking.progress);
-  setData(`${prefix}ProgressText`, `Progress: ${sum.picking.progress ?? 0}%`);
-  if (document.querySelector(`[data-id='${prefix}Orders']`)) {
-    setData(`${prefix}Orders`, `${sum.picking.ordersCompleted ?? 0}/${sum.picking.ordersTotal ?? 0}`);
-  }
-
-  // stocking column
-  setData(`${prefix}Expected`, `${sum.stocking.expected ?? ''}`);
-  setData(`${prefix}Stocked`, `${sum.stocking.stocked ?? ''}`);
-  setData(`${prefix}Left`,     `${sum.stocking.remaining ?? ''}`);
-
-  // status dot
-  const dot = document.querySelector(`[data-id='${prefix}Status']`);
-  if (dot) { dot.style.backgroundColor = statusFrom(sum.picking.perf, sum.stocking.perf); dot.style.opacity = '1'; }
-}
-
-function populateHome(){
-  ['mz','cf','hb','nc','rr'].forEach(k => {
-    const s = summaryFromDeptKey(k);
-    if (s) updateHomeTile(k, s);
   });
+}
 
-  // shipping waves
-  const host = document.getElementById('shipWaveList') || document.querySelector('[data-id="shipWaveList"]');
+/* ====== status light logic ====== */
+function setStatusDot(id, pickPerf, stockPerf) {
+  const el = document.querySelector(`[data-id="${id}"]`);
+  if (!el) return;
+  let cls = 'status-green';
+  if (pickPerf < 75 || stockPerf < 75) cls = 'status-red';
+  else if (pickPerf < 90 || stockPerf < 90) cls = 'status-yellow';
+  el.classList.remove('status-green','status-yellow','status-red');
+  el.classList.add(cls);
+}
+
+/* ====== populate cards from JSON ====== */
+function fillDeptCard(key, src) {
+  if (!src) return;
+
+  // numbers (fallback to 0)
+  const pPerf  = Number(src.pick_perf ?? 0);
+  const sPerf  = Number(src.stock_perf ?? 0);
+  const wave   = src.wave ?? src.pick_wave ?? 0;
+  const prog   = Number(src.progress ?? 0);
+  const orders = `${src.orders_complete ?? 0}/${src.orders_total ?? 0}`;
+  const exp    = Number(src.expected ?? 0);
+  const stk    = Number(src.stocked ?? 0);
+  const left   = Number(src.left ?? src.remaining ?? 0);
+
+  // texts
+  setText(`${key}PickPerf`, `${pPerf}%`);
+  setText(`${key}StockPerf`, `${sPerf}%`);
+  setText(`${key}Wave`, wave);
+  setWidth(`${key}Progress`, prog);
+  setText(`${key}ProgressText`, `Progress: ${prog}%`);
+  setText(`${key}Orders`, orders);
+  setText(`${key}Expected`, exp);
+  setText(`${key}Stocked`, stk);
+  setText(`${key}Left`, left);
+
+  // status & gauges
+  setStatusDot(`${key}Status`, pPerf, sPerf);
+  makeGauge(`${key}Pick`, pPerf);
+  makeGauge(`${key}Stock`, sPerf);
+}
+
+/* ====== Shipping list ====== */
+function buildShipping(shipping) {
+  const host = $('#shipWaveList');
   if (!host) return;
   host.innerHTML = '';
-
-  const waves = (DASH && DASH.ship && Array.isArray(DASH.ship.waves)) ? DASH.ship.waves.slice().sort((a,b)=>a.wave-b.wave) : [];
-  if (!waves.length) {
-    const p = document.createElement('div');
-    p.style.color = '#666';
-    p.style.marginTop = '6px';
-    p.textContent = 'No waves yet';
-    host.appendChild(p);
-    return;
-  }
-
+  const waves = shipping?.waves ?? [];
   waves.forEach(w => {
     const row = document.createElement('div');
-    row.className = 'ship-wave-row';
-
-    const label = document.createElement('div');
-    label.textContent = `Wave ${w.wave}: ${clamp(w.progress,0,100)}%`;
-    label.style.marginBottom = '4px';
-
-    const bar = document.createElement('div'); bar.className='progress-bar';
-    const fill = document.createElement('div'); fill.className='progress-fill';
-    fill.style.width = `${clamp(w.progress,0,100)}%`;
-    bar.appendChild(fill);
-
-    row.appendChild(label); row.appendChild(bar);
+    row.className = 'ship-row';
+    row.innerHTML = `
+      <div>Wave ${w.wave ?? ''}</div>
+      <div class="ship-bar"><div class="ship-fill" style="width:${Math.max(0,Math.min(100,Number(w.progress||0)))}%"></div></div>
+      <div>${Math.round(Number(w.progress||0))}%</div>
+    `;
     host.appendChild(row);
   });
 }
 
-// ---- levels/zones (unchanged behavior) ----
-function setLevel(prefix, lvl){
-  if (!lvl) return;
-  renderGauge(document.getElementById(`${prefix}-picking-gauge`), lvl.picking?.perf ?? 0);
-  renderGauge(document.getElementById(`${prefix}-stocking-gauge`), lvl.stocking?.perf ?? 0);
-  setData(`${prefix}Pick`, `${lvl.picking?.perf ?? 0}%`);
-  setData(`${prefix}Stock`, `${lvl.stocking?.perf ?? 0}%`);
-  setData(`${prefix}Wave`, `${lvl.picking?.wave ?? ''}`);
-  setData(`${prefix}ProgressText`, `Progress: ${lvl.picking?.progress ?? 0}%`);
-  const p = document.querySelector(`[data-id='${prefix}Progress']`);
-  if (p) p.style.width = `${clamp(lvl.picking?.progress ?? 0, 0, 100)}%`;
-  setData(`${prefix}Expected`, `${lvl.stocking?.expected ?? ''}`);
-  setData(`${prefix}Stocked`, `${lvl.stocking?.stocked ?? ''}`);
-  setData(`${prefix}Remaining`, `${lvl.stocking?.remaining ?? ''}`);
+/* ====== Levels & Zones population (only if those ids exist) ====== */
+function fillLevel(prefix, obj) {
+  if (!obj) return;
+  setText(`${prefix}Pick`, `${obj.picking?.perf ?? 0}%`);
+  setText(`${prefix}Wave`, obj.picking?.wave ?? 0);
+  setText(`${prefix}ProgressText`, `${obj.picking?.progress ?? 0}%`);
+  setWidth(`${prefix}Progress`, obj.picking?.progress ?? 0);
+  makeGauge(`${prefix.replace(/(\d+)-.*$/,'$1')}-${prefix.includes('stock')?'':'picking-'}gauge`, obj.picking?.perf ?? 0);
+  makeGauge(`${prefix.replace(/(\d+)-.*$/,'$1')}-stocking-gauge`, obj.stocking?.perf ?? 0);
+  setText(`${prefix}Stock`, `${obj.stocking?.perf ?? 0}%`);
+  setText(`${prefix}Expected`, obj.stocking?.expected ?? 0);
+  setText(`${prefix}Stocked`, obj.stocking?.stocked ?? 0);
+  setText(`${prefix}Remaining`, obj.stocking?.remaining ?? 0);
 }
 
-function populateCurrentPage(){
-  const active = document.querySelector('.page.active')?.id;
-  if (!active || !DASH) return;
+/* ====== init ====== */
+async function init() {
+  // basic navigation: clicking tile titles goes to their Levels page
+  const navMap = { MZ:'mzLevels', CF:'cfLevels', HB:'hbLevels', NC:'ncLevels', RR:'rrLevels' };
+  $$('.tile h3').forEach(h => {
+    const key = h.textContent.trim();
+    if (navMap[key]) h.addEventListener('click', () => navigate(navMap[key]));
+  });
 
-  if (active === 'mainPage') { populateHome(); return; }
+  navigate('mainPage');
 
-  if (active === 'mzLevels') {
-    const lv = DASH?.mz?.levels || {};
-    setLevel('mz1', lv[1]); setLevel('mz2', lv[2]); setLevel('mz3', lv[3]); return;
+  // load data
+  let data = {};
+  try { data = await (await fetch('data/dashboard.json', {cache:'no-store'})).json(); }
+  catch { /* leave empty; tiles will show 0s */ }
+
+  // HOME cards (uses "dept" section placed by your Excel->JSON script)
+  const mz = data.mz?.dept ?? data.mz ?? {};
+  const cf = data.cf?.dept ?? data.cf ?? {};
+  const hb = data.hb?.dept ?? data.hb ?? {};
+  const nc = data.nc?.dept ?? data.nc ?? {};
+  const rr = data.rr?.dept ?? data.rr ?? {};
+
+  fillDeptCard('mz', mz);
+  fillDeptCard('cf', cf);
+  fillDeptCard('hb', hb);
+  fillDeptCard('nc', nc);
+  fillDeptCard('rr', rr);
+
+  // Shipping waves (if present)
+  buildShipping(data.shipping);
+
+  /* Levels (populate if those pages are visited later) */
+  // Example for MZ1/2/3 and Zones 10/11/20/21/30/31 (if present in JSON)
+  const mzLevels = data.mz?.levels || {};
+  const cfLevels = data.cf?.levels || {};
+  const hbLevels = data.hb?.levels || {};
+  const rrLevels = data.rr?.levels || {};
+  const ncLevels = data.nc?.levels || {};
+
+  // MZ Level 1/2/3
+  if (mzLevels[1]) fillLevel('mz1', mzLevels[1]);
+  if (mzLevels[2]) fillLevel('mz2', mzLevels[2]);
+  if (mzLevels[3]) fillLevel('mz3', mzLevels[3]);
+
+  // CF Level 1/2/3
+  if (cfLevels[1]) fillLevel('cf1', cfLevels[1]);
+  if (cfLevels[2]) fillLevel('cf2', cfLevels[2]);
+  if (cfLevels[3]) fillLevel('cf3', cfLevels[3]);
+
+  // HB Level 1/2/3
+  if (hbLevels[1]) fillLevel('hb1', hbLevels[1]);
+  if (hbLevels[2]) fillLevel('hb2', hbLevels[2]);
+  if (hbLevels[3]) fillLevel('hb3', hbLevels[3]);
+
+  // RR Level 1/2
+  if (rrLevels[1]) fillLevel('rr1', rrLevels[1]);
+  if (rrLevels[2]) fillLevel('rr2', rrLevels[2]);
+
+  // NC groups (oil/pbs/highpick/ncrr) if you mapped them to 1..4
+  if (ncLevels.oil || ncLevels[1]) fillLevel('ncoil', ncLevels.oil || ncLevels[1]);
+  if (ncLevels.pbs || ncLevels[2]) fillLevel('ncpbs', ncLevels.pbs || ncLevels[2]);
+  if (ncLevels.highpick || ncLevels[3]) fillLevel('nchighpick', ncLevels.highpick || ncLevels[3]);
+  if (ncLevels.ncrr || ncLevels[4]) fillLevel('ncncrr', ncLevels.ncrr || ncLevels[4]);
+
+  // Zones examples (only fill if present)
+  const z = (lvl, id) => lvl?.zones?.[id];
+  if (mzLevels[1]) {
+    if (z(mzLevels[1], 10)) fillLevel('z10', z(mzLevels[1],10));
+    if (z(mzLevels[1], 11)) fillLevel('z11', z(mzLevels[1],11));
   }
-  if (active === 'cfLevels') {
-    const lv = DASH?.cf?.levels || {};
-    setLevel('cf1', lv[1]); setLevel('cf2', lv[2]); setLevel('cf3', lv[3]); return;
+  if (mzLevels[2]) {
+    if (z(mzLevels[2], 20)) fillLevel('z20', z(mzLevels[2],20));
+    if (z(mzLevels[2], 21)) fillLevel('z21', z(mzLevels[2],21));
   }
-  if (active === 'hbLevels') {
-    const lv = DASH?.hb?.levels || {};
-    setLevel('hb1', lv[1]); setLevel('hb2', lv[2]); setLevel('hb3', lv[3]); return;
-  }
-  if (active === 'rrLevels') {
-    const lv = DASH?.rr?.levels || {};
-    setLevel('rr1', lv[1]); setLevel('rr2', lv[2]); return;
-  }
-  if (active === 'ncLevels') {
-    const lv = DASH?.nc?.levels || {};
-    setLevel('ncoil', lv.oil);
-    setLevel('ncpbs', lv.pbs);
-    setLevel('nchighpick', lv.highPick);
-    setLevel('ncncrr', lv.ncrr);
-    return;
+  if (mzLevels[3]) {
+    if (z(mzLevels[3], 30)) fillLevel('z30', z(mzLevels[3],30));
+    if (z(mzLevels[3], 31)) fillLevel('z31', z(mzLevels[3],31));
   }
 }
 
-function navigate(pageId){
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  const el = document.getElementById(pageId); if (el) el.classList.add('active');
-  setTimeout(populateCurrentPage, 0);
-}
-window.navigate = navigate;
-
-window.addEventListener('DOMContentLoaded', async ()=>{
-  try{
-    const res = await fetch('data/dashboard.json', { cache:'no-store' });
-    DASH = await res.json();
-  }catch(e){ console.error('Failed to load data/dashboard.json', e); }
-  populateCurrentPage();
-});
+document.addEventListener('DOMContentLoaded', init);
