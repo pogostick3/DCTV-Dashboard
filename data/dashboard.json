@@ -124,6 +124,17 @@
           }
         }
       }
+    },
+    "dept": {
+      "pick_perf": 80,
+      "stock_perf": 89,
+      "wave": 1,
+      "progress": 75,
+      "orders_complete": 750,
+      "orders_total": 1000,
+      "expected": 800,
+      "stocked": 700,
+      "remaining": 100
     }
   },
   "cf": {
@@ -170,6 +181,17 @@
         },
         "zones": {}
       }
+    },
+    "dept": {
+      "pick_perf": 76,
+      "stock_perf": 84,
+      "wave": 1,
+      "progress": 56,
+      "orders_complete": 500,
+      "orders_total": 900,
+      "expected": 780,
+      "stocked": 690,
+      "remaining": 90
     }
   },
   "hb": {
@@ -216,6 +238,17 @@
         },
         "zones": {}
       }
+    },
+    "dept": {
+      "pick_perf": 65,
+      "stock_perf": 79,
+      "wave": 3,
+      "progress": 38,
+      "orders_complete": 300,
+      "orders_total": 800,
+      "expected": 890,
+      "stocked": 705,
+      "remaining": 185
     }
   },
   "rr": {
@@ -248,6 +281,17 @@
         },
         "zones": {}
       }
+    },
+    "dept": {
+      "pick_perf": 72,
+      "stock_perf": 85,
+      "wave": 4,
+      "progress": 48,
+      "orders_complete": 470,
+      "orders_total": 970,
+      "expected": 970,
+      "stocked": 820,
+      "remaining": 150
     }
   },
   "nc": {
@@ -308,6 +352,17 @@
         },
         "zones": {}
       }
+    },
+    "dept": {
+      "pick_perf": 88,
+      "stock_perf": 90,
+      "wave": 2,
+      "progress": 36,
+      "orders_complete": 400,
+      "orders_total": 1100,
+      "expected": 1100,
+      "stocked": 980,
+      "remaining": 120
     }
   },
   "ship": {
@@ -326,7 +381,9 @@
         },
         "zones": {}
       }
-    },
+    }
+  },
+  "shipping": {
     "waves": [
       {
         "wave": 1,
