@@ -40,7 +40,7 @@ function setStatusDotByDataId(id, statusName) {
   el.classList.add(`status-${statusName}`);
 }
 
-/* ===== Draw a triangle pointer on an overlay canvas ===== */
+/* ===== Draw a triangle pointer on an overlay canvas (fixed geometry) ===== */
 function drawNeedleOverlay(canvasId, value) {
   const base = document.getElementById(canvasId);
   if (!base) return;
@@ -66,7 +66,7 @@ function drawNeedleOverlay(canvasId, value) {
     parent.appendChild(overlay);
   }
 
-  // Match sizes exactly
+  // Match sizes exactly (prefer attribute, then actual, then fallback)
   const w = parseInt(base.getAttribute('width') || base.width || 160, 10);
   const h = parseInt(base.getAttribute('height') || base.height || 80, 10);
   overlay.width = w;
@@ -75,19 +75,21 @@ function drawNeedleOverlay(canvasId, value) {
   const ctx = overlay.getContext('2d');
   ctx.clearRect(0, 0, overlay.width, overlay.height);
 
-  // Geometry assumption for our semi-doughnut:
-  // center at (w/2, h), radius ~ w/2, arc spans -90..+90°
-  const r = Math.min(w / 2, h);
+  // ✅ Correct center & radius for a 180° gauge in Chart.js:
+  // - center is the middle of the canvas (w/2, h/2)
+  // - radius is limited by the smaller dimension: min(w, h) / 2
   const cx = w / 2;
-  const cy = h;
+  const cy = h / 2;
+  const r = Math.min(w, h) / 2;
 
-  // Angle for value
+  // Angle for the value (Chart.js rotation -90°, circumference 180°)
   const angle = (-90 + (180 * (Number(value) || 0) / 100)) * Math.PI / 180;
 
   // Triangle pointer that overhangs the ring
-  const tipOvershoot = 6;   // px beyond outer edge
-  const baseInset = 4;      // px inside inner edge (~ cutout 70%)
-  const innerR = r * 0.7;   // cutout '70%'
+  const cutoutRatio = 0.70;      // must match Chart.js cutout
+  const innerR = r * cutoutRatio;
+  const tipOvershoot = 6;        // px beyond outer edge
+  const baseInset = 4;           // px inside inner edge
   const tipR = r + tipOvershoot;
   const baseR = Math.max(1, innerR - baseInset);
   const spread = 8 * Math.PI / 180; // tip angular width
@@ -102,6 +104,7 @@ function drawNeedleOverlay(canvasId, value) {
   const color = perfColorHex(perfColorName(value));
 
   ctx.save();
+  // Filled triangle (needle)
   ctx.beginPath();
   ctx.moveTo(b1X, b1Y);
   ctx.lineTo(tipX, tipY);
@@ -109,6 +112,7 @@ function drawNeedleOverlay(canvasId, value) {
   ctx.closePath();
   ctx.fillStyle = color;
   ctx.fill();
+
   // subtle outline for contrast
   ctx.lineWidth = 1;
   ctx.strokeStyle = '#333';
@@ -164,9 +168,7 @@ function renderGaugeById(canvasId, value) {
     },
     plugins: [{
       // draw needle AFTER Chart.js finishes animating this chart
-      afterRender: (chart) => {
-        drawNeedleOverlay(canvasId, val);
-      }
+      afterRender: () => drawNeedleOverlay(canvasId, val)
     }]
   });
 }
