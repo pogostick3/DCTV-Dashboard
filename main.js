@@ -45,7 +45,7 @@ function drawNeedleOverlay(canvasId, chart) {
   const base = document.getElementById(canvasId);
   if (!base || !chart) return;
 
-  // Ensure parent can position overlay
+  // Ensure the parent can contain absolutely positioned children
   const parent = base.parentElement;
   if (!parent) return;
   if (getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
@@ -57,23 +57,25 @@ function drawNeedleOverlay(canvasId, chart) {
     overlay = document.createElement('canvas');
     overlay.id = overlayId;
     overlay.style.position = 'absolute';
-    overlay.style.left = '0';
-    overlay.style.top = '0';
     overlay.style.pointerEvents = 'none';
     overlay.style.zIndex = '5';
     parent.appendChild(overlay);
   }
 
-  // Match sizes exactly
-  const w = parseInt(base.getAttribute('width') || base.width || 160, 10);
-  const h = parseInt(base.getAttribute('height') || base.height || 80, 10);
-  overlay.width = w;
+  // 🔧 Align overlay to the canvas *itself*, not the parent’s (0,0)
+  overlay.style.left = `${base.offsetLeft}px`;
+  overlay.style.top  = `${base.offsetTop}px`;
+
+  // Match pixel size exactly to the canvas backing store
+  const w = base.width  || parseInt(base.getAttribute('width') || '160', 10);
+  const h = base.height || parseInt(base.getAttribute('height') || '80', 10);
+  overlay.width  = w;
   overlay.height = h;
 
   const ctx = overlay.getContext('2d');
   ctx.clearRect(0, 0, overlay.width, overlay.height);
 
-  // Read true geometry from the first arc (colored slice)
+  // Read true geometry from the colored slice
   const meta = chart.getDatasetMeta(0);
   const arc = meta?.data?.[0];
   if (!arc) return;
@@ -98,11 +100,11 @@ function drawNeedleOverlay(canvasId, chart) {
   const gaugeColor = Array.isArray(ds.backgroundColor) ? ds.backgroundColor[0] : ds.backgroundColor;
 
   // Needle geometry (shaft + head)
-  const tipOvershoot = 6;                 // how far past the ring the tip goes
-  const headBaseInset = 6;                // head base inside outer radius
-  const shaftInsetFromCenter = 2;         // start just outside the knob
-  const shaftEndInsetFromOuter = headBaseInset + 2; // stop a bit before the head
-  const headSpread = 9 * Math.PI / 180;   // head width
+  const tipOvershoot = 6;
+  const headBaseInset = 6;
+  const shaftInsetFromCenter = 2;
+  const shaftEndInsetFromOuter = headBaseInset + 2;
+  const headSpread = 9 * Math.PI / 180;
   const knobR = Math.max(2, (outerR - innerR) * 0.15);
 
   // Shaft from center to near-outer ring
