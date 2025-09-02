@@ -40,8 +40,7 @@ function setStatusDotByDataId(id, statusName) {
   el.classList.add(`status-${statusName}`);
 }
 
-/* ===== Draw a triangle pointer on an overlay canvas
-   — aligned to Chart.js' true arc end angle ===== */
+/* ===== Draw a center-anchored needle aligned to the arc end ===== */
 function drawNeedleOverlay(canvasId, chart) {
   const base = document.getElementById(canvasId);
   if (!base || !chart) return;
@@ -65,7 +64,7 @@ function drawNeedleOverlay(canvasId, chart) {
     parent.appendChild(overlay);
   }
 
-  // Match sizes exactly (prefer width/height attributes)
+  // Match sizes exactly
   const w = parseInt(base.getAttribute('width') || base.width || 160, 10);
   const h = parseInt(base.getAttribute('height') || base.height || 80, 10);
   overlay.width = w;
@@ -74,7 +73,7 @@ function drawNeedleOverlay(canvasId, chart) {
   const ctx = overlay.getContext('2d');
   ctx.clearRect(0, 0, overlay.width, overlay.height);
 
-  // Read true geometry from the first arc (dataset 0 slice 0)
+  // Read true geometry from the first arc (colored slice)
   const meta = chart.getDatasetMeta(0);
   const arc = meta?.data?.[0];
   if (!arc) return;
@@ -92,35 +91,60 @@ function drawNeedleOverlay(canvasId, chart) {
   const cy = p.y ?? h/2;
   const innerR = p.innerRadius ?? (Math.min(w, h) / 2 * 0.7);
   const outerR = p.outerRadius ?? (Math.min(w, h) / 2);
-  const angle = p.endAngle; // <-- EXACT end of colored arc
-
-  // Needle styling (tweak to taste)
-  const tipOvershoot = 6;        // px beyond outer edge
-  const baseInset = 4;           // px inside inner edge
-  const spread = 8 * Math.PI / 180; // tip angular width
-  const knobR = Math.max(2, (outerR - innerR) * 0.15);
-
-  const tipR = outerR + tipOvershoot;
-  const baseR = Math.max(1, innerR - baseInset);
-
-  // Triangle points
-  const tipX = cx + tipR * Math.cos(angle);
-  const tipY = cy + tipR * Math.sin(angle);
-  const b1X  = cx + baseR * Math.cos(angle - spread);
-  const b1Y  = cy + baseR * Math.sin(angle - spread);
-  const b2X  = cx + baseR * Math.cos(angle + spread);
-  const b2Y  = cy + baseR * Math.sin(angle + spread);
+  const angle  = p.endAngle; // EXACT end of colored arc
 
   // Color-match to the gauge color
   const ds = chart.config.data.datasets[0];
   const gaugeColor = Array.isArray(ds.backgroundColor) ? ds.backgroundColor[0] : ds.backgroundColor;
 
+  // Needle geometry (shaft + head)
+  const tipOvershoot = 6;                 // how far past the ring the tip goes
+  const headBaseInset = 6;                // head base inside outer radius
+  const shaftInsetFromCenter = 2;         // start just outside the knob
+  const shaftEndInsetFromOuter = headBaseInset + 2; // stop a bit before the head
+  const headSpread = 9 * Math.PI / 180;   // head width
+  const knobR = Math.max(2, (outerR - innerR) * 0.15);
+
+  // Shaft from center to near-outer ring
+  const shaftStartR = knobR + shaftInsetFromCenter;
+  const shaftEndR   = Math.max(innerR, outerR - shaftEndInsetFromOuter);
+
+  const sx1 = cx + shaftStartR * Math.cos(angle);
+  const sy1 = cy + shaftStartR * Math.sin(angle);
+  const sx2 = cx + shaftEndR   * Math.cos(angle);
+  const sy2 = cy + shaftEndR   * Math.sin(angle);
+
   ctx.save();
-  // Needle
+  ctx.lineCap = 'round';
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#333'; // outline for contrast
   ctx.beginPath();
-  ctx.moveTo(b1X, b1Y);
+  ctx.moveTo(sx1, sy1);
+  ctx.lineTo(sx2, sy2);
+  ctx.stroke();
+
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = gaugeColor || '#2ecc71';
+  ctx.beginPath();
+  ctx.moveTo(sx1, sy1);
+  ctx.lineTo(sx2, sy2);
+  ctx.stroke();
+
+  // Arrow head at the ring boundary (aligned to the angle)
+  const headBaseR = outerR - headBaseInset;
+  const tipR      = outerR + tipOvershoot;
+
+  const tipX = cx + tipR * Math.cos(angle);
+  const tipY = cy + tipR * Math.sin(angle);
+  const hb1X = cx + headBaseR * Math.cos(angle - headSpread);
+  const hb1Y = cy + headBaseR * Math.sin(angle - headSpread);
+  const hb2X = cx + headBaseR * Math.cos(angle + headSpread);
+  const hb2Y = cy + headBaseR * Math.sin(angle + headSpread);
+
+  ctx.beginPath();
+  ctx.moveTo(hb1X, hb1Y);
   ctx.lineTo(tipX, tipY);
-  ctx.lineTo(b2X, b2Y);
+  ctx.lineTo(hb2X, hb2Y);
   ctx.closePath();
   ctx.fillStyle = gaugeColor || '#2ecc71';
   ctx.fill();
