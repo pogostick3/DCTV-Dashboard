@@ -3,7 +3,7 @@ if (window.ChartDataLabels) {
   Chart.register(ChartDataLabels);
 }
 
-/* --- Robust needle plugin (works across browsers / Chart.js v4) --- */
+/* --- Triangle needle plugin (robust across browsers / Chart.js v4) --- */
 const gaugeNeedlePlugin = {
   id: 'gaugeNeedle',
   afterDatasetsDraw(chart, args, opts) {
@@ -17,63 +17,76 @@ const gaugeNeedlePlugin = {
 
       const val = Number(ds.data?.[0]) || 0;
 
-      // Safely read geometry (v4 uses getProps for animated values)
-      const props = arc.getProps
+      // Safely read geometry (handles v4 animated values)
+      const p = arc.getProps
         ? arc.getProps(['x','y','innerRadius','outerRadius'], true)
         : { x: arc.x, y: arc.y, innerRadius: arc.innerRadius, outerRadius: arc.outerRadius };
 
-      let { x: cx, y: cy, innerRadius: inner, outerRadius: outer } = props;
+      let cx = p.x, cy = p.y, inner = p.innerRadius, outer = p.outerRadius;
 
-      // Fallbacks if any are missing
+      // Fallbacks if any missing
       if (!outer) {
         const ca = chart.chartArea;
         outer = Math.min(ca.right - ca.left, ca.bottom - ca.top) / 2;
       }
       if (!inner) {
-        // Respect cutout if it’s a percentage; otherwise assume 70%
         const cut = chart.options.cutout ?? '70%';
         let cutRatio = 0.7;
         if (typeof cut === 'string' && cut.endsWith('%')) cutRatio = Math.max(0, Math.min(1, parseFloat(cut) / 100));
         inner = outer * cutRatio;
       }
 
+      // Angle for the value (degrees -> radians)
       const rotation = chart.options.rotation ?? -90;      // degrees
       const circumference = chart.options.circumference ?? 180; // degrees
-      const angleRad = (rotation + (circumference * (val / 100))) * Math.PI / 180;
+      const angle = (rotation + (circumference * (val / 100))) * Math.PI / 180;
 
-      // Endpoints across the ring (inner -> outer)
-      const x1 = cx + inner * Math.cos(angleRad);
-      const y1 = cy + inner * Math.sin(angleRad);
-      const x2 = cx + outer * Math.cos(angleRad);
-      const y2 = cy + outer * Math.sin(angleRad);
-
+      // Triangle pointer geometry
       const ringThickness = Math.max(2, outer - inner);
-      const lineWidth = Math.max(3, ringThickness * (opts?.widthRatio ?? 0.6));
-      const knobR = Math.max(2, ringThickness * (opts?.knobRadiusRatio ?? 0.15));
+      const tipOvershoot = opts?.tipOvershoot ?? 6;      // px beyond outer edge
+      const baseInset    = opts?.baseInset ?? 4;         // px inside inner edge
+      const tipR  = outer + tipOvershoot;
+      const baseR = Math.max(1, inner - baseInset);
+      const delta = (opts?.tipAngleDeg ?? 8) * Math.PI / 180; // angular spread of triangle tip
+
+      // Triangle points
+      const tipX = cx + tipR * Math.cos(angle);
+      const tipY = cy + tipR * Math.sin(angle);
+      const b1X = cx + baseR * Math.cos(angle - delta);
+      const b1Y = cy + baseR * Math.sin(angle - delta);
+      const b2X = cx + baseR * Math.cos(angle + delta);
+      const b2Y = cy + baseR * Math.sin(angle + delta);
 
       const color =
         val < 75 ? '#e74c3c' : (val <= 90 ? '#f1c40f' : '#2ecc71');
 
       const ctx = chart.ctx;
       ctx.save();
-      ctx.strokeStyle = color;
-      ctx.fillStyle = color;
-      ctx.lineWidth = lineWidth;
-      ctx.lineCap = 'round';
+      ctx.globalCompositeOperation = 'source-over';
 
-      // Radial bar across the ring
+      // Filled triangle (needle)
       ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
+      ctx.moveTo(b1X, b1Y);
+      ctx.lineTo(tipX, tipY);
+      ctx.lineTo(b2X, b2Y);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+
+      // Optional subtle outline to pop against the arc
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#333';
       ctx.stroke();
 
       // Center knob
+      const knobR = Math.max(2, ringThickness * (opts?.knobRadiusRatio ?? 0.15));
       ctx.beginPath();
       ctx.arc(cx, cy, knobR, 0, Math.PI * 2);
+      ctx.fillStyle = color;
       ctx.fill();
       ctx.restore();
     } catch {
-      /* do nothing – don’t break charts */
+      /* keep chart from breaking on any error */
     }
   }
 };
@@ -153,9 +166,11 @@ function renderGaugeById(canvasId, value) {
         legend: { display: false },
         tooltip: { enabled: false },
         datalabels: { display: false },
-        // options for our needle plugin (can tweak)
+        // options for our needle plugin (tweak if you like)
         gaugeNeedle: {
-          widthRatio: 0.6,
+          tipOvershoot: 6,
+          baseInset: 4,
+          tipAngleDeg: 8,
           knobRadiusRatio: 0.15
         }
       }
