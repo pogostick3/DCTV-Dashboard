@@ -40,7 +40,7 @@ function setStatusDotByDataId(id, statusName) {
   el.classList.add(`status-${statusName}`);
 }
 
-/* ===== Gauge needle plugin (draws in the same scaled ctx) ===== */
+/* ===== Gauge needle plugin (draws in same scaled ctx) ===== */
 const needlePlugin = {
   id: 'needlePlugin',
   afterDatasetsDraw(chart) {
@@ -48,25 +48,22 @@ const needlePlugin = {
     const arc = meta?.data?.[0];
     if (!arc) return;
 
-    // Read accurate geometry from Chart.js element
     const p = arc.getProps
       ? arc.getProps(['x','y','innerRadius','outerRadius','endAngle'], true)
       : { x: arc.x, y: arc.y, innerRadius: arc.innerRadius, outerRadius: arc.outerRadius, endAngle: arc.endAngle };
 
     const { x: cx, y: cy, innerRadius, outerRadius, endAngle } = p;
 
-    // Color = first (colored) slice
     const ds = chart.config.data.datasets[0];
     const gaugeColor = (Array.isArray(ds.backgroundColor) ? ds.backgroundColor[0] : ds.backgroundColor) || '#2ecc71';
 
     const ctx = chart.ctx;
 
-    // Needle geometry
-    const tipOvershoot = 6;                 // how far past the ring the tip goes
-    const headBaseInset = 6;                // head base inside outer radius
-    const shaftInsetFromCenter = 2;         // start just outside knob
+    const tipOvershoot = 6;
+    const headBaseInset = 6;
+    const shaftInsetFromCenter = 2;
     const shaftEndInsetFromOuter = headBaseInset + 2;
-    const headSpread = 9 * Math.PI / 180;   // head width
+    const headSpread = 9 * Math.PI / 180;
     const knobR = Math.max(2, (outerRadius - innerRadius) * 0.15);
 
     const shaftStartR = knobR + shaftInsetFromCenter;
@@ -77,7 +74,6 @@ const needlePlugin = {
     const sx2 = cx + shaftEndR   * Math.cos(endAngle);
     const sy2 = cy + shaftEndR   * Math.sin(endAngle);
 
-    // Shaft (outline + color)
     ctx.save();
     ctx.lineCap = 'round';
     ctx.lineWidth = 3;
@@ -94,7 +90,6 @@ const needlePlugin = {
     ctx.lineTo(sx2, sy2);
     ctx.stroke();
 
-    // Arrow head
     const headBaseR = outerRadius - headBaseInset;
     const tipR      = outerRadius + tipOvershoot;
 
@@ -116,7 +111,6 @@ const needlePlugin = {
     ctx.strokeStyle = '#333';
     ctx.stroke();
 
-    // Center knob
     ctx.beginPath();
     ctx.arc(cx, cy, knobR, 0, Math.PI * 2);
     ctx.fillStyle = gaugeColor;
@@ -130,7 +124,6 @@ function renderGaugeById(canvasId, value) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
 
-  // Fix canvas attribute size so Chart.js + plugin share the same coordinates
   const w = parseInt(canvas.getAttribute('width') || '160', 10);
   const h = parseInt(canvas.getAttribute('height') || '80', 10);
   canvas.width = w;
@@ -170,18 +163,61 @@ function renderGaugeById(canvasId, value) {
   });
 }
 
+/* ===== Shipping waves renderer ===== */
+function renderShippingTile() {
+  const listEl = document.getElementById('shippingWaves');
+  if (!listEl) return;
+
+  // grab waves array if provided; fallback to single row from picking progress
+  const ship = dashboardData?.ship;
+  const firstLevelKey = ship?.levels ? Object.keys(ship.levels)[0] : null;
+  const level = firstLevelKey ? ship.levels[firstLevelKey] : null;
+
+  let waves = ship?.waves;
+  if (!Array.isArray(waves) || waves.length === 0) {
+    const single = Number(level?.picking?.progress ?? 0);
+    waves = [{ wave: level?.picking?.wave ?? 1, progress: single }];
+  }
+
+  listEl.innerHTML = '';
+  waves.forEach(w => {
+    const pct = Math.max(0, Math.min(100, Number(w.progress) || 0));
+    const color = perfColorHex(perfColorName(pct));
+
+    const row = document.createElement('div');
+    row.className = 'wave-row';
+    row.innerHTML = `
+      <div class="wave-label">${w.wave}</div>
+      <div class="wave-bar"><div class="wave-fill" style="width:${pct}%; background:${color}"></div></div>
+      <div class="wave-pct">${pct}%</div>
+    `;
+    listEl.appendChild(row);
+  });
+}
+
 /* ===== HOME ===== */
 function populateMain() {
   const depts = ['mz', 'cf', 'hb', 'nc', 'rr', 'ship'];
   depts.forEach((deptKey) => {
     const dept = dashboardData[deptKey];
     if (!dept) return;
-    const firstLevelKey = Object.keys(dept.levels)[0];
-    if (!firstLevelKey) return;
+    const firstLevelKey = Object.keys(dept.levels || {})[0];
+
+    if (deptKey === 'ship') {
+      // Render custom waves list
+      renderShippingTile();
+
+      // Status dot still based on perf numbers if present
+      const lvl = firstLevelKey ? dept.levels[firstLevelKey] : null;
+      const pickPerf  = Number(lvl?.picking?.perf ?? 0);
+      const stockPerf = Number(lvl?.stocking?.perf ?? 0);
+      setStatusDotByDataId(`shipStatus`, statusFromTwo(pickPerf, stockPerf));
+      return;
+    }
 
     const level = dept.levels[firstLevelKey];
-    const pickPerf  = Number(level.picking?.perf ?? 0);
-    const stockPerf = Number(level.stocking?.perf ?? 0);
+    const pickPerf  = Number(level?.picking?.perf ?? 0);
+    const stockPerf = Number(level?.stocking?.perf ?? 0);
 
     renderGaugeById(`${deptKey}Pick`, pickPerf);
     renderGaugeById(`${deptKey}Stock`, stockPerf);
@@ -323,7 +359,7 @@ function populateLevels_NC() {
   });
 }
 
-/* ===== ZONES (MZ) ===== */
+/* ===== Zones (MZ) ===== */
 function populateMZZones(levelNumber) {
   const level = dashboardData?.mz?.levels?.[levelNumber];
   if (!level || !level.zones) return;
