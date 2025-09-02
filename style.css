@@ -1,226 +1,93 @@
-/* -------------------- Base -------------------- */
+/* Base */
 *,
 *::before,
 *::after { box-sizing: border-box; }
 
 :root{
-  --bg: #f4f4f4;
-  --card: #ffffff;
-  --text: #222;
-  --muted: #666;
-  --shadow: 0 2px 8px rgba(0,0,0,.08);
-  --green: #2ecc71;
-  --bar-bg: #e0e0e0;
+  --bg:#f4f4f4; --card:#fff; --text:#222; --muted:#666;
+  --bar-bg:#e0e0e0; --green:#2ecc71; --shadow:0 2px 8px rgba(0,0,0,.08);
 }
 
-html, body {
-  margin: 0;
-  padding: 0;
-  font-family: Arial, Helvetica, sans-serif;
-  color: var(--text);
-  background: var(--bg);
-}
+html,body{ margin:0; padding:0; font-family:Arial,Helvetica,sans-serif; color:var(--text); background:var(--bg); }
 
-/* Page visibility */
-.page { display: none; padding: 20px; }
-.page.active { display: block; }
+.page{ display:none; padding:20px; }
+.page.active{ display:block; }
 
-/* Header */
-.header {
-  font-size: 2rem;
-  font-weight: 800;
-  text-align: center;
-  margin: 10px 0 24px;
-}
+.header{ text-align:center; font-size:2rem; font-weight:800; margin:10px 0 24px; }
 
-/* -------------------- Tile grid -------------------- */
-.tile-container { display: flex; flex-direction: column; gap: 20px; }
-.tile-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
+/* Tiles */
+.tile-container{ display:flex; flex-direction:column; gap:20px; }
+.tile-row{ display:flex; flex-wrap:wrap; justify-content:center; gap:20px; }
 
 .tile{
-  background: var(--card);
-  border-radius: 10px;
-  width: 360px;
-  padding: 16px 18px 18px;
-  box-shadow: var(--shadow);
-  transition: transform .15s ease;
-  cursor: default;
+  position: relative;             /* ensure status dot anchors here */
+  width:360px; background:var(--card); border-radius:10px;
+  padding:16px 18px 18px; box-shadow:var(--shadow);
+  transition: transform .12s ease;
 }
-.tile:hover { transform: translateY(-1px); }
+.tile:hover{ transform: translateY(-1px); }
+.tile h3{ margin:0 0 6px; font-size:1.2rem; }
 
-.tile h3{
-  margin: 0 0 6px;
-  font-size: 1.2rem;
-}
-
-/* status dot (color set inline by JS) */
-.status-dot,
-.tile [data-id$="Status"]{
-  position: absolute;
-  top: 12px; right: 12px;
-  width: 10px; height: 10px;
-  border-radius: 50%;
+/* status dot — visible always */
+.tile .status-dot, .tile [data-id$="Status"]{
+  position:absolute; top:12px; right:12px; width:10px; height:10px;
+  border-radius:50%; z-index:2; opacity:1;
 }
 
-/* gauges side-by-side */
-.gauges.horizontal{
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 14px;
-  margin: 6px 0 8px;
-}
+/* Gauge row */
+.gauges.horizontal{ display:flex; justify-content:space-between; align-items:flex-start; gap:14px; margin:6px 0 8px; }
 
-/* --------- CANVAS: keep a real size so Chart.js semicircles render --------- */
-.tile canvas,
-.level-tile canvas{
-  width: 160px;
-  height: 100px;        /* <- important: avoids the “skinny line” issue */
-  display: block;
-}
+/* Canvas: give CSS size (layout) and JS sets internal pixels */
+.tile canvas, .level-tile canvas{ width:160px; height:100px; display:block; }
 
-/* -------------------- Metrics & bars -------------------- */
-.metrics{
-  font-size: .95rem;
-  color: var(--muted);
-  margin: 4px 0;
-  text-align: center;
-}
+/* Metrics & bars */
+.metrics{ font-size:.95rem; color:var(--muted); margin:4px 0; text-align:center; }
 
-.progress-bar{
-  width: 100%;
-  height: 14px;
-  background: var(--bar-bg);
-  border-radius: 8px;
-  overflow: hidden;
-  margin: 6px 0;
-}
-.progress-fill{
-  height: 100%;
-  background: var(--green);
-  border-radius: 8px;
-  width: 0%;
-  transition: width .35s ease;
-}
+.progress-bar{ width:100%; height:14px; background:var(--bar-bg); border-radius:8px; overflow:hidden; margin:6px 0; }
+.progress-fill{ height:100%; background:var(--green); border-radius:8px; width:0%; transition:width .35s ease; }
 
-/* -------------------- Levels / Zones pages -------------------- */
-.levels-container-vertical{
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
-  align-items: center;
-}
+/* Levels / Zones */
+.levels-container-vertical{ display:flex; flex-direction:column; gap:28px; align-items:center; }
+.level-tile{ position:relative; background:var(--card); border-radius:10px; width:95%; max-width:1100px; padding:20px; box-shadow:var(--shadow); }
+.tile-header{ display:flex; justify-content:center; align-items:center; position:relative; margin-bottom:14px; }
+.level-title{ margin:0; font-size:1.3rem; text-align:center; width:100%; }
 
-.level-tile{
-  position: relative;
-  background: var(--card);
-  border-radius: 10px;
-  width: 95%;
-  max-width: 1100px;
-  padding: 20px;
-  box-shadow: var(--shadow);
-}
+.status-yellow{ background:#f1c40f; }
+.status-green{ background:#2ecc71; }
+.status-red  { background:#e74c3c; }
 
-.tile-header{
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-  margin-bottom: 14px;
-}
+.dual-section{ display:flex; flex-wrap:wrap; gap:28px; justify-content:space-between; align-items:stretch; }
+.sub-section{ flex:1 1 460px; display:flex; align-items:center; gap:18px; }
+.sub-section .left{ flex:0 0 200px; display:flex; flex-direction:column; align-items:center; }
+.sub-section .right{ flex:1; display:flex; flex-direction:column; gap:8px; }
 
-.level-title{
-  margin: 0;
-  font-size: 1.3rem;
-  text-align: center;
-  width: 100%;
-}
+.divider{ width:2px; align-self:stretch; background:#ccc; }
+.divider.picking{ background:#f39c12; }
+.divider.stocking{ background:#2ecc71; }
 
-.status-yellow{ background: #f1c40f; }
-.status-green{ background: #2ecc71; }
-.status-red  { background: #e74c3c; }
+.subsection-separator{ width:2px; background:#bdbdbd; align-self:stretch; }
 
-.dual-section{
-  display: flex;
-  flex-wrap: wrap;
-  gap: 28px;
-  justify-content: space-between;
-  align-items: stretch;
-}
-
-.sub-section{
-  flex: 1 1 460px;
-  display: flex;
-  align-items: center;
-  gap: 18px;
-}
-
-.sub-section .left{
-  flex: 0 0 200px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.sub-section .right{
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* colored vertical dividers beside the gauge groups */
-.divider{
-  width: 2px;
-  align-self: stretch;
-  background: #ccc;
-}
-.divider.picking{ background: #f39c12; } /* orange */
-.divider.stocking{ background: #2ecc71; } /* green */
-
-.subsection-separator{
-  width: 2px;
-  background: #bdbdbd;
-  align-self: stretch;
-}
-
-/* Center number over gauge on levels/zones pages */
+/* Center number over gauge (levels/zones) */
 .performance-metric{
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  font-weight: 700;
-  color: #333;
-  pointer-events: none;
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  font-weight:700; color:#333; pointer-events:none;
 }
 
-/* -------------------- Buttons -------------------- */
-button{
-  margin-left: 10px;
-  padding: 6px 12px;
-  font-size: 1rem;
-  border: none;
-  border-radius: 6px;
-  background: #0b74ff;
-  color: #fff;
-  cursor: pointer;
-}
+/* Buttons */
+button{ margin-left:10px; padding:6px 12px; font-size:1rem; border:none; border-radius:6px; background:#0b74ff; color:#fff; cursor:pointer; }
 button:hover{ background:#075ad1; }
 
-/* -------------------- Shipping tile -------------------- */
-.ship-tile{
-  min-width: 360px;
-}
-.ship-wave-row{ margin: 8px 0; }
-.ship-wave-row .progress-bar{ height: 12px; }
+/* Shipping */
+.ship-tile{ min-width:360px; }
+.ship-wave-row{ margin:8px 0; }
+.ship-wave-row .progress-bar{ height:12px; }
 
-/* -------------------- Responsive tweaks -------------------- */
-@media (max-width: 860px){
-  .tile{ width: 95vw; max-width: 560px; }
-  .tile canvas, .level-tile canvas{ width: 150px; height: 95px; }
-  .sub-section{ flex: 1 1 100%; }
+/* Responsive */
+@media (max-width:860px){
+  .tile{ width:95vw; max-width:560px; }
+  .tile canvas, .level-tile canvas{ width:150px; height:95px; }
+  .sub-section{ flex:1 1 100%; }
 }
-
-@media (max-width: 520px){
-  .tile canvas, .level-tile canvas{ width: 140px; height: 88px; }
+@media (max-width:520px){
+  .tile canvas, .level-tile canvas{ width:140px; height:88px; }
 }
