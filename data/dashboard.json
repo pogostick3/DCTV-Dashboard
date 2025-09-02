@@ -326,6 +326,24 @@
         },
         "zones": {}
       }
-    }
+    },
+    "waves": [
+      {
+        "wave": 1,
+        "progress": 100
+      },
+      {
+        "wave": 2,
+        "progress": 75
+      },
+      {
+        "wave": 3,
+        "progress": 20
+      },
+      {
+        "wave": 4,
+        "progress": 0
+      }
+    ]
   }
 }
