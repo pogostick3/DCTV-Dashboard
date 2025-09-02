@@ -1,93 +1,237 @@
-/* Base */
-*,
-*::before,
-*::after { box-sizing: border-box; }
+// main.js — fixed gauges, shipping list, always-on status dots
 
-:root{
-  --bg:#f4f4f4; --card:#fff; --text:#222; --muted:#666;
-  --bar-bg:#e0e0e0; --green:#2ecc71; --shadow:0 2px 8px rgba(0,0,0,.08);
+if (window.ChartDataLabels) Chart.register(ChartDataLabels);
+
+let DASH = null;
+const CHARTS = new Map();
+
+const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+const $ = (s) => document.querySelector(s);
+
+function perfColor(p) { p = Number(p)||0; return p<75?'#e74c3c':(p<=90?'#f1c40f':'#2ecc71'); }
+function statusFrom(a,b){ const A=perfColor(a),B=perfColor(b); if(A==='#e74c3c'||B==='#e74c3c')return'#e74c3c'; if(A==='#f1c40f'||B==='#f1c40f')return'#f1c40f'; return'#2ecc71'; }
+
+// ---- gauge needle plugin ----
+const needlePlugin = {
+  id:'gaugeNeedle',
+  afterDatasetsDraw(chart){
+    const v=(chart.config.data||{})._needleValue||0;
+    const angle=-Math.PI + (clamp(v,0,100)/100)*Math.PI;
+    const a=chart.getDatasetMeta(0)?.data?.[0]; if(!a) return;
+    const {x:cx,y:cy,innerRadius,outerRadius}=a;
+    const r=(innerRadius+outerRadius)/2;
+    const ctx=chart.ctx; ctx.save();
+
+    ctx.beginPath(); ctx.lineWidth=2; ctx.strokeStyle='#555';
+    ctx.moveTo(cx,cy); ctx.lineTo(cx+r*Math.cos(angle),cy+r*Math.sin(angle)); ctx.stroke();
+
+    const tipX=cx+r*Math.cos(angle), tipY=cy+r*Math.sin(angle), ah=8, aw=6;
+    const leftX  = tipX - ah*Math.cos(angle) + (aw/2)*Math.cos(angle-Math.PI/2);
+    const leftY  = tipY - ah*Math.sin(angle) + (aw/2)*Math.sin(angle-Math.PI/2);
+    const rightX = tipX - ah*Math.cos(angle) + (aw/2)*Math.cos(angle+Math.PI/2);
+    const rightY = tipY - ah*Math.sin(angle) + (aw/2)*Math.sin(angle+Math.PI/2);
+    ctx.beginPath(); ctx.fillStyle='#777';
+    ctx.moveTo(tipX,tipY); ctx.lineTo(leftX,leftY); ctx.lineTo(rightX,rightY); ctx.closePath(); ctx.fill();
+
+    ctx.beginPath(); ctx.fillStyle='#555'; ctx.arc(cx,cy,3,0,2*Math.PI); ctx.fill();
+    ctx.restore();
+  }
+};
+
+// ---- solid, non-responsive, half-doughnut gauge ----
+function renderGauge(canvas, value){
+  if(!canvas) return;
+
+  // fix skinny-line bug: set real drawing size (attributes)
+  const W = Number(canvas.dataset.w) || 160;
+  const H = Number(canvas.dataset.h) || 100;
+  if (canvas.width !== W)  canvas.width  = W;
+  if (canvas.height !== H) canvas.height = H;
+
+  const ctx = canvas.getContext('2d'); if(!ctx) return;
+
+  if (CHARTS.has(canvas.id)) { CHARTS.get(canvas.id).destroy(); CHARTS.delete(canvas.id); }
+
+  const v = clamp(Number(value)||0, 0, 100);
+  const color = perfColor(v);
+
+  const chart = new Chart(ctx, {
+    type: 'doughnut',
+    data: { _needleValue: v, datasets: [{ data:[v,100-v], backgroundColor:[color,'#e0e0e0'], borderWidth:0 }] },
+    options: {
+      rotation: -Math.PI,
+      circumference: Math.PI,
+      cutout: '70%',
+      responsive: false,               // IMPORTANT: use our canvas width/height
+      maintainAspectRatio: false,
+      animation: { duration: 250 },
+      plugins: { legend:{display:false}, tooltip:{enabled:false}, datalabels:{display:false} }
+    },
+    plugins: [needlePlugin]
+  });
+
+  CHARTS.set(canvas.id, chart);
 }
 
-html,body{ margin:0; padding:0; font-family:Arial,Helvetica,sans-serif; color:var(--text); background:var(--bg); }
+// ---- data helpers ----
+function summaryFromDeptKey(deptKey){
+  if(!DASH || !DASH[deptKey]) return null;
 
-.page{ display:none; padding:20px; }
-.page.active{ display:block; }
+  if (DASH[deptKey].dept) return DASH[deptKey].dept; // prefer 'dept' sheet
 
-.header{ text-align:center; font-size:2rem; font-weight:800; margin:10px 0 24px; }
+  const levels = DASH[deptKey].levels || {};
+  const keys = Object.keys(levels);
+  if(!keys.length) return null;
+  const firstKey = keys.map(k => (isFinite(k)?Number(k):k))
+                       .sort((a,b)=> (typeof a==='number'&&typeof b==='number')?a-b:0)[0];
+  const lvl = levels[firstKey];
+  if(!lvl) return null;
 
-/* Tiles */
-.tile-container{ display:flex; flex-direction:column; gap:20px; }
-.tile-row{ display:flex; flex-wrap:wrap; justify-content:center; gap:20px; }
-
-.tile{
-  position: relative;             /* ensure status dot anchors here */
-  width:360px; background:var(--card); border-radius:10px;
-  padding:16px 18px 18px; box-shadow:var(--shadow);
-  transition: transform .12s ease;
-}
-.tile:hover{ transform: translateY(-1px); }
-.tile h3{ margin:0 0 6px; font-size:1.2rem; }
-
-/* status dot — visible always */
-.tile .status-dot, .tile [data-id$="Status"]{
-  position:absolute; top:12px; right:12px; width:10px; height:10px;
-  border-radius:50%; z-index:2; opacity:1;
-}
-
-/* Gauge row */
-.gauges.horizontal{ display:flex; justify-content:space-between; align-items:flex-start; gap:14px; margin:6px 0 8px; }
-
-/* Canvas: give CSS size (layout) and JS sets internal pixels */
-.tile canvas, .level-tile canvas{ width:160px; height:100px; display:block; }
-
-/* Metrics & bars */
-.metrics{ font-size:.95rem; color:var(--muted); margin:4px 0; text-align:center; }
-
-.progress-bar{ width:100%; height:14px; background:var(--bar-bg); border-radius:8px; overflow:hidden; margin:6px 0; }
-.progress-fill{ height:100%; background:var(--green); border-radius:8px; width:0%; transition:width .35s ease; }
-
-/* Levels / Zones */
-.levels-container-vertical{ display:flex; flex-direction:column; gap:28px; align-items:center; }
-.level-tile{ position:relative; background:var(--card); border-radius:10px; width:95%; max-width:1100px; padding:20px; box-shadow:var(--shadow); }
-.tile-header{ display:flex; justify-content:center; align-items:center; position:relative; margin-bottom:14px; }
-.level-title{ margin:0; font-size:1.3rem; text-align:center; width:100%; }
-
-.status-yellow{ background:#f1c40f; }
-.status-green{ background:#2ecc71; }
-.status-red  { background:#e74c3c; }
-
-.dual-section{ display:flex; flex-wrap:wrap; gap:28px; justify-content:space-between; align-items:stretch; }
-.sub-section{ flex:1 1 460px; display:flex; align-items:center; gap:18px; }
-.sub-section .left{ flex:0 0 200px; display:flex; flex-direction:column; align-items:center; }
-.sub-section .right{ flex:1; display:flex; flex-direction:column; gap:8px; }
-
-.divider{ width:2px; align-self:stretch; background:#ccc; }
-.divider.picking{ background:#f39c12; }
-.divider.stocking{ background:#2ecc71; }
-
-.subsection-separator{ width:2px; background:#bdbdbd; align-self:stretch; }
-
-/* Center number over gauge (levels/zones) */
-.performance-metric{
-  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-  font-weight:700; color:#333; pointer-events:none;
+  return {
+    picking: {
+      perf: lvl.picking?.perf ?? 0,
+      wave: lvl.picking?.wave ?? 0,
+      progress: lvl.picking?.progress ?? 0,
+      ordersCompleted: 0,
+      ordersTotal: 0
+    },
+    stocking: {
+      perf: lvl.stocking?.perf ?? 0,
+      expected: lvl.stocking?.expected ?? 0,
+      stocked: lvl.stocking?.stocked ?? 0,
+      remaining: lvl.stocking?.remaining ?? 0
+    }
+  };
 }
 
-/* Buttons */
-button{ margin-left:10px; padding:6px 12px; font-size:1rem; border:none; border-radius:6px; background:#0b74ff; color:#fff; cursor:pointer; }
-button:hover{ background:#075ad1; }
+function setData(did, val){ const el = document.querySelector(`[data-id='${did}']`); if(el) el.textContent = val; }
+function setWidth(did, pct){ const el=document.querySelector(`[data-id='${did}']`); if(el) el.style.width = `${clamp(pct||0,0,100)}%`; }
 
-/* Shipping */
-.ship-tile{ min-width:360px; }
-.ship-wave-row{ margin:8px 0; }
-.ship-wave-row .progress-bar{ height:12px; }
+function updateHomeTile(prefix, sum){
+  // gauges
+  renderGauge(document.getElementById(`${prefix}Pick`),  sum.picking.perf);
+  renderGauge(document.getElementById(`${prefix}Stock`), sum.stocking.perf);
 
-/* Responsive */
-@media (max-width:860px){
-  .tile{ width:95vw; max-width:560px; }
-  .tile canvas, .level-tile canvas{ width:150px; height:95px; }
-  .sub-section{ flex:1 1 100%; }
+  // labels
+  setData(`${prefix}PickPerf`,  `${sum.picking.perf}%`);
+  setData(`${prefix}StockPerf`, `${sum.stocking.perf}%`);
+
+  // picking column
+  setData(`${prefix}Wave`, `${sum.picking.wave ?? ''}`);
+  setWidth(`${prefix}Progress`, sum.picking.progress);
+  setData(`${prefix}ProgressText`, `Progress: ${sum.picking.progress ?? 0}%`);
+  if (document.querySelector(`[data-id='${prefix}Orders']`)) {
+    setData(`${prefix}Orders`, `${sum.picking.ordersCompleted ?? 0}/${sum.picking.ordersTotal ?? 0}`);
+  }
+
+  // stocking column
+  setData(`${prefix}Expected`, `${sum.stocking.expected ?? ''}`);
+  setData(`${prefix}Stocked`, `${sum.stocking.stocked ?? ''}`);
+  setData(`${prefix}Left`,     `${sum.stocking.remaining ?? ''}`);
+
+  // status dot
+  const dot = document.querySelector(`[data-id='${prefix}Status']`);
+  if (dot) { dot.style.backgroundColor = statusFrom(sum.picking.perf, sum.stocking.perf); dot.style.opacity = '1'; }
 }
-@media (max-width:520px){
-  .tile canvas, .level-tile canvas{ width:140px; height:88px; }
+
+function populateHome(){
+  ['mz','cf','hb','nc','rr'].forEach(k => {
+    const s = summaryFromDeptKey(k);
+    if (s) updateHomeTile(k, s);
+  });
+
+  // shipping waves
+  const host = document.getElementById('shipWaveList') || document.querySelector('[data-id="shipWaveList"]');
+  if (!host) return;
+  host.innerHTML = '';
+
+  const waves = (DASH && DASH.ship && Array.isArray(DASH.ship.waves)) ? DASH.ship.waves.slice().sort((a,b)=>a.wave-b.wave) : [];
+  if (!waves.length) {
+    const p = document.createElement('div');
+    p.style.color = '#666';
+    p.style.marginTop = '6px';
+    p.textContent = 'No waves yet';
+    host.appendChild(p);
+    return;
+  }
+
+  waves.forEach(w => {
+    const row = document.createElement('div');
+    row.className = 'ship-wave-row';
+
+    const label = document.createElement('div');
+    label.textContent = `Wave ${w.wave}: ${clamp(w.progress,0,100)}%`;
+    label.style.marginBottom = '4px';
+
+    const bar = document.createElement('div'); bar.className='progress-bar';
+    const fill = document.createElement('div'); fill.className='progress-fill';
+    fill.style.width = `${clamp(w.progress,0,100)}%`;
+    bar.appendChild(fill);
+
+    row.appendChild(label); row.appendChild(bar);
+    host.appendChild(row);
+  });
 }
+
+// ---- levels/zones (unchanged behavior) ----
+function setLevel(prefix, lvl){
+  if (!lvl) return;
+  renderGauge(document.getElementById(`${prefix}-picking-gauge`), lvl.picking?.perf ?? 0);
+  renderGauge(document.getElementById(`${prefix}-stocking-gauge`), lvl.stocking?.perf ?? 0);
+  setData(`${prefix}Pick`, `${lvl.picking?.perf ?? 0}%`);
+  setData(`${prefix}Stock`, `${lvl.stocking?.perf ?? 0}%`);
+  setData(`${prefix}Wave`, `${lvl.picking?.wave ?? ''}`);
+  setData(`${prefix}ProgressText`, `Progress: ${lvl.picking?.progress ?? 0}%`);
+  const p = document.querySelector(`[data-id='${prefix}Progress']`);
+  if (p) p.style.width = `${clamp(lvl.picking?.progress ?? 0, 0, 100)}%`;
+  setData(`${prefix}Expected`, `${lvl.stocking?.expected ?? ''}`);
+  setData(`${prefix}Stocked`, `${lvl.stocking?.stocked ?? ''}`);
+  setData(`${prefix}Remaining`, `${lvl.stocking?.remaining ?? ''}`);
+}
+
+function populateCurrentPage(){
+  const active = document.querySelector('.page.active')?.id;
+  if (!active || !DASH) return;
+
+  if (active === 'mainPage') { populateHome(); return; }
+
+  if (active === 'mzLevels') {
+    const lv = DASH?.mz?.levels || {};
+    setLevel('mz1', lv[1]); setLevel('mz2', lv[2]); setLevel('mz3', lv[3]); return;
+  }
+  if (active === 'cfLevels') {
+    const lv = DASH?.cf?.levels || {};
+    setLevel('cf1', lv[1]); setLevel('cf2', lv[2]); setLevel('cf3', lv[3]); return;
+  }
+  if (active === 'hbLevels') {
+    const lv = DASH?.hb?.levels || {};
+    setLevel('hb1', lv[1]); setLevel('hb2', lv[2]); setLevel('hb3', lv[3]); return;
+  }
+  if (active === 'rrLevels') {
+    const lv = DASH?.rr?.levels || {};
+    setLevel('rr1', lv[1]); setLevel('rr2', lv[2]); return;
+  }
+  if (active === 'ncLevels') {
+    const lv = DASH?.nc?.levels || {};
+    setLevel('ncoil', lv.oil);
+    setLevel('ncpbs', lv.pbs);
+    setLevel('nchighpick', lv.highPick);
+    setLevel('ncncrr', lv.ncrr);
+    return;
+  }
+}
+
+function navigate(pageId){
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const el = document.getElementById(pageId); if (el) el.classList.add('active');
+  setTimeout(populateCurrentPage, 0);
+}
+window.navigate = navigate;
+
+window.addEventListener('DOMContentLoaded', async ()=>{
+  try{
+    const res = await fetch('data/dashboard.json', { cache:'no-store' });
+    DASH = await res.json();
+  }catch(e){ console.error('Failed to load data/dashboard.json', e); }
+  populateCurrentPage();
+});
