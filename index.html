@@ -2,989 +2,182 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Warehouse Scoreboard</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
-  <script src="main.js" defer></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Warehouse Dashboard</title>
+  <link rel="stylesheet" href="style.css"/>
+  <script defer src="main.js"></script>
 </head>
-
 <body>
-  <!-- =================== HOME =================== -->
+  <!-- MAIN PAGE -->
   <div id="mainPage" class="page active">
-    <div class="header">Warehouse Dashboard</div>
+    <header class="app-header">Warehouse Dashboard</header>
 
-    <div class="tile-container">
-      <div class="tile-row">
-        <!-- MZ -->
-        <div class="tile">
+    <section class="tile-grid">
+      <!-- MZ -->
+      <article class="tile" data-dept="mz" onclick="navigate('mzLevels')">
+        <div class="tile-header">
           <h3>MZ</h3>
-          <div class="status-dot" data-id="mzStatus"></div>
-
-          <div class="gauges horizontal">
-            <div>
-              <div class="metrics">Picking Perf: <span class="metric" data-id="mzPickPerf"></span></div>
-              <canvas id="mzPick"></canvas>
-              <div class="metrics">Current Wave: <span class="metric" data-id="mzWave"></span></div>
-              <div class="progress-bar"><div class="progress-fill" data-id="mzProgress"></div></div>
-              <div class="metrics" data-id="mzProgressText"></div>
-              <div class="metrics">Orders: <span class="metric" data-id="mzOrders"></span></div>
-            </div>
-
-            <div>
-              <div class="metrics">Stocking Perf: <span class="metric" data-id="mzStockPerf"></span></div>
-              <canvas id="mzStock"></canvas>
-              <div class="metrics">Expected: <span class="metric" data-id="mzExpected"></span></div>
-              <div class="metrics">Stocked: <span class="metric" data-id="mzStocked"></span></div>
-              <div class="metrics">Pieces Left: <span class="metric" data-id="mzLeft"></span></div>
-            </div>
-          </div>
+          <span class="status-dot" id="mzStatus"></span>
         </div>
 
-        <!-- CF -->
-        <div class="tile">
+        <div class="tile-body two-col">
+          <!-- Picking side -->
+          <div class="side">
+            <div class="metric-line"><span>Picking Perf:</span> <strong id="mzPickPerf">0%</strong></div>
+            <div class="gauge-wrap">
+              <canvas id="mzPickGauge" width="240" height="140"></canvas>
+            </div>
+            <div class="kv">Current Wave: <span id="mzWave">0</span></div>
+            <div class="progress">
+              <div class="progress-fill" id="mzProgress"></div>
+            </div>
+            <div class="kv">Progress: <span id="mzProgressText">0%</span></div>
+            <div class="kv">Orders: <span id="mzOrders">0/0</span></div>
+          </div>
+
+          <!-- Stocking side -->
+          <div class="side">
+            <div class="metric-line"><span>Stocking Perf:</span> <strong id="mzStockPerf">0%</strong></div>
+            <div class="gauge-wrap">
+              <canvas id="mzStockGauge" width="240" height="140"></canvas>
+            </div>
+            <div class="kv">Expected: <span id="mzExpected">0</span></div>
+            <div class="kv">Stocked: <span id="mzStocked">0</span></div>
+            <div class="kv">Pieces Left: <span id="mzLeft">0</span></div>
+          </div>
+        </div>
+      </article>
+
+      <!-- CF -->
+      <article class="tile" data-dept="cf">
+        <div class="tile-header">
           <h3>CF</h3>
-          <div class="status-dot" data-id="cfStatus"></div>
-
-          <div class="gauges horizontal">
-            <div>
-              <div class="metrics">Picking Perf: <span data-id="cfPickPerf"></span></div>
-              <canvas id="cfPick"></canvas>
-              <div class="metrics">Current Wave: <span data-id="cfWave"></span></div>
-              <div class="progress-bar"><div class="progress-fill" data-id="cfProgress"></div></div>
-              <div class="metrics" data-id="cfProgressText"></div>
-              <div class="metrics">Orders: <span data-id="cfOrders"></span></div>
-            </div>
-
-            <div>
-              <div class="metrics">Stocking Perf: <span data-id="cfStockPerf"></span></div>
-              <canvas id="cfStock"></canvas>
-              <div class="metrics">Expected: <span data-id="cfExpected"></span></div>
-              <div class="metrics">Stocked: <span data-id="cfStocked"></span></div>
-              <div class="metrics">Pieces Left: <span data-id="cfLeft"></span></div>
-            </div>
-          </div>
+          <span class="status-dot" id="cfStatus"></span>
         </div>
 
-        <!-- HB -->
-        <div class="tile">
+        <div class="tile-body two-col">
+          <div class="side">
+            <div class="metric-line"><span>Picking Perf:</span> <strong id="cfPickPerf">0%</strong></div>
+            <div class="gauge-wrap"><canvas id="cfPickGauge" width="240" height="140"></canvas></div>
+            <div class="kv">Current Wave: <span id="cfWave">0</span></div>
+            <div class="progress"><div class="progress-fill" id="cfProgress"></div></div>
+            <div class="kv">Progress: <span id="cfProgressText">0%</span></div>
+            <div class="kv">Orders: <span id="cfOrders">0/0</span></div>
+          </div>
+
+          <div class="side">
+            <div class="metric-line"><span>Stocking Perf:</span> <strong id="cfStockPerf">0%</strong></div>
+            <div class="gauge-wrap"><canvas id="cfStockGauge" width="240" height="140"></canvas></div>
+            <div class="kv">Expected: <span id="cfExpected">0</span></div>
+            <div class="kv">Stocked: <span id="cfStocked">0</span></div>
+            <div class="kv">Pieces Left: <span id="cfLeft">0</span></div>
+          </div>
+        </div>
+      </article>
+
+      <!-- HB -->
+      <article class="tile" data-dept="hb">
+        <div class="tile-header">
           <h3>HB</h3>
-          <div class="status-dot" data-id="hbStatus"></div>
+          <span class="status-dot" id="hbStatus"></span>
+        </div>
 
-          <div class="gauges horizontal">
-            <div>
-              <div class="metrics">Picking Perf: <span data-id="hbPickPerf"></span></div>
-              <canvas id="hbPick"></canvas>
-              <div class="metrics">Current Wave: <span data-id="hbWave"></span></div>
-              <div class="progress-bar"><div class="progress-fill" data-id="hbProgress"></div></div>
-              <div class="metrics" data-id="hbProgressText"></div>
-              <div class="metrics">Orders: <span data-id="hbOrders"></span></div>
-            </div>
+        <div class="tile-body two-col">
+          <div class="side">
+            <div class="metric-line"><span>Picking Perf:</span> <strong id="hbPickPerf">0%</strong></div>
+            <div class="gauge-wrap"><canvas id="hbPickGauge" width="240" height="140"></canvas></div>
+            <div class="kv">Current Wave: <span id="hbWave">0</span></div>
+            <div class="progress"><div class="progress-fill" id="hbProgress"></div></div>
+            <div class="kv">Progress: <span id="hbProgressText">0%</span></div>
+            <div class="kv">Orders: <span id="hbOrders">0/0</span></div>
+          </div>
 
-            <div>
-              <div class="metrics">Stocking Perf: <span data-id="hbStockPerf"></span></div>
-              <canvas id="hbStock"></canvas>
-              <div class="metrics">Expected: <span data-id="hbExpected"></span></div>
-              <div class="metrics">Stocked: <span data-id="hbStocked"></span></div>
-              <div class="metrics">Pieces Left: <span data-id="hbLeft"></span></div>
-            </div>
+          <div class="side">
+            <div class="metric-line"><span>Stocking Perf:</span> <strong id="hbStockPerf">0%</strong></div>
+            <div class="gauge-wrap"><canvas id="hbStockGauge" width="240" height="140"></canvas></div>
+            <div class="kv">Expected: <span id="hbExpected">0</span></div>
+            <div class="kv">Stocked: <span id="hbStocked">0</span></div>
+            <div class="kv">Pieces Left: <span id="hbLeft">0</span></div>
           </div>
         </div>
-      </div>
+      </article>
 
-      <div class="tile-row">
-        <!-- NC -->
-        <div class="tile">
+      <!-- NC -->
+      <article class="tile" data-dept="nc">
+        <div class="tile-header">
           <h3>NC</h3>
-          <div class="status-dot" data-id="ncStatus"></div>
-
-          <div class="gauges horizontal">
-            <div>
-              <div class="metrics">Picking Perf: <span data-id="ncPickPerf"></span></div>
-              <canvas id="ncPick"></canvas>
-              <div class="metrics">Current Wave: <span data-id="ncWave"></span></div>
-              <div class="progress-bar"><div class="progress-fill" data-id="ncProgress"></div></div>
-              <div class="metrics" data-id="ncProgressText"></div>
-              <div class="metrics">Orders: <span data-id="ncOrders"></span></div>
-            </div>
-
-            <div>
-              <div class="metrics">Stocking Perf: <span data-id="ncStockPerf"></span></div>
-              <canvas id="ncStock"></canvas>
-              <div class="metrics">Expected: <span data-id="ncExpected"></span></div>
-              <div class="metrics">Stocked: <span data-id="ncStocked"></span></div>
-              <div class="metrics">Pieces Left: <span data-id="ncLeft"></span></div>
-            </div>
-          </div>
+          <span class="status-dot" id="ncStatus"></span>
         </div>
 
-        <!-- RR -->
-        <div class="tile">
+        <div class="tile-body two-col">
+          <div class="side">
+            <div class="metric-line"><span>Picking Perf:</span> <strong id="ncPickPerf">0%</strong></div>
+            <div class="gauge-wrap"><canvas id="ncPickGauge" width="240" height="140"></canvas></div>
+            <div class="kv">Current Wave: <span id="ncWave">0</span></div>
+            <div class="progress"><div class="progress-fill" id="ncProgress"></div></div>
+            <div class="kv">Progress: <span id="ncProgressText">0%</span></div>
+            <div class="kv">Orders: <span id="ncOrders">0/0</span></div>
+          </div>
+
+          <div class="side">
+            <div class="metric-line"><span>Stocking Perf:</span> <strong id="ncStockPerf">0%</strong></div>
+            <div class="gauge-wrap"><canvas id="ncStockGauge" width="240" height="140"></canvas></div>
+            <div class="kv">Expected: <span id="ncExpected">0</span></div>
+            <div class="kv">Stocked: <span id="ncStocked">0</span></div>
+            <div class="kv">Pieces Left: <span id="ncLeft">0</span></div>
+          </div>
+        </div>
+      </article>
+
+      <!-- RR -->
+      <article class="tile" data-dept="rr">
+        <div class="tile-header">
           <h3>RR</h3>
-          <div class="status-dot" data-id="rrStatus"></div>
-
-          <div class="gauges horizontal">
-            <div>
-              <div class="metrics">Picking Perf: <span data-id="rrPickPerf"></span></div>
-              <canvas id="rrPick"></canvas>
-              <div class="metrics">Current Wave: <span data-id="rrWave"></span></div>
-              <div class="progress-bar"><div class="progress-fill" data-id="rrProgress"></div></div>
-              <div class="metrics" data-id="rrProgressText"></div>
-              <div class="metrics">Orders: <span data-id="rrOrders"></span></div>
-            </div>
-
-            <div>
-              <div class="metrics">Stocking Perf: <span data-id="rrStockPerf"></span></div>
-              <canvas id="rrStock"></canvas>
-              <div class="metrics">Expected: <span data-id="rrExpected"></span></div>
-              <div class="metrics">Stocked: <span data-id="rrStocked"></span></div>
-              <div class="metrics">Pieces Left: <span data-id="rrLeft"></span></div>
-            </div>
-          </div>
+          <span class="status-dot" id="rrStatus"></span>
         </div>
 
-        <!-- SHIPPING -->
-        <div class="tile ship-tile">
+        <div class="tile-body two-col">
+          <div class="side">
+            <div class="metric-line"><span>Picking Perf:</span> <strong id="rrPickPerf">0%</strong></div>
+            <div class="gauge-wrap"><canvas id="rrPickGauge" width="240" height="140"></canvas></div>
+            <div class="kv">Current Wave: <span id="rrWave">0</span></div>
+            <div class="progress"><div class="progress-fill" id="rrProgress"></div></div>
+            <div class="kv">Progress: <span id="rrProgressText">0%</span></div>
+            <div class="kv">Orders: <span id="rrOrders">0/0</span></div>
+          </div>
+
+          <div class="side">
+            <div class="metric-line"><span>Stocking Perf:</span> <strong id="rrStockPerf">0%</strong></div>
+            <div class="gauge-wrap"><canvas id="rrStockGauge" width="240" height="140"></canvas></div>
+            <div class="kv">Expected: <span id="rrExpected">0</span></div>
+            <div class="kv">Stocked: <span id="rrStocked">0</span></div>
+            <div class="kv">Pieces Left: <span id="rrLeft">0</span></div>
+          </div>
+        </div>
+      </article>
+
+      <!-- Shipping -->
+      <article class="tile">
+        <div class="tile-header">
           <h3>Shipping</h3>
-          <div class="status-dot" style="background:#2ecc71"></div>
-          <div class="metrics" style="text-align:left">Wave Progress</div>
-          <div id="shipWaveList"></div>
+          <span class="status-dot status-green"></span>
         </div>
-      </div>
-    </div>
-  </div>
-  <!-- =================== /HOME =================== -->
 
-
-  <!-- =================== LEVELS PAGES =================== -->
-
-  <!-- MZ Levels -->
-  <div class="page" id="mzLevels">
-    <div class="header">MZ Levels <button onclick="navigate('mainPage')">Home</button></div>
-    <div class="levels-container-vertical">
-      <!-- L1 -->
-      <div class="level-tile">
-        <div class="tile-header"><h2 class="level-title">MZ Level 1</h2><div class="status-dot status-yellow"></div></div>
-        <div class="dual-section">
-          <div class="sub-section">
-            <div class="left">
-              <h3>Picking</h3>
-              <div style="position:relative;">
-                <canvas id="mz1-picking-gauge"></canvas>
-                <div class="performance-metric" data-id="mz1Pick"></div>
-              </div>
-            </div>
-            <div class="divider picking"></div>
-            <div class="right">
-              <div>Current Wave: <span data-id="mz1Wave"></span></div>
-              <div>Progress: <span data-id="mz1ProgressText"></span></div>
-              <div class="progress-bar"><div class="progress-fill" data-id="mz1Progress"></div></div>
-            </div>
-          </div>
-
-          <div class="subsection-separator"></div>
-
-          <div class="sub-section">
-            <div class="left">
-              <h3>Stocking</h3>
-              <div style="position:relative;">
-                <canvas id="mz1-stocking-gauge"></canvas>
-                <div class="performance-metric" data-id="mz1Stock"></div>
-              </div>
-            </div>
-            <div class="divider stocking"></div>
-            <div class="right">
-              <div>Expected: <span data-id="mz1Expected"></span></div>
-              <div>Stocked: <span data-id="mz1Stocked"></span></div>
-              <div>Remaining: <span data-id="mz1Remaining"></span></div>
-            </div>
-          </div>
+        <div class="tile-body">
+          <h4 class="subheading">Wave Progress</h4>
+          <div id="shippingList" class="shipping-list"><!-- injected --></div>
         </div>
-      </div>
-
-      <!-- L2 -->
-      <div class="level-tile">
-        <div class="tile-header"><h2 class="level-title">MZ Level 2</h2><div class="status-dot status-yellow"></div></div>
-        <div class="dual-section">
-          <div class="sub-section">
-            <div class="left">
-              <h3>Picking</h3>
-              <div style="position:relative;">
-                <canvas id="mz2-picking-gauge"></canvas>
-                <div class="performance-metric" data-id="mz2Pick"></div>
-              </div>
-            </div>
-            <div class="divider picking"></div>
-            <div class="right">
-              <div>Current Wave: <span data-id="mz2Wave"></span></div>
-              <div>Progress: <span data-id="mz2ProgressText"></span></div>
-              <div class="progress-bar"><div class="progress-fill" data-id="mz2Progress"></div></div>
-            </div>
-          </div>
-
-          <div class="subsection-separator"></div>
-
-          <div class="sub-section">
-            <div class="left">
-              <h3>Stocking</h3>
-              <div style="position:relative;">
-                <canvas id="mz2-stocking-gauge"></canvas>
-                <div class="performance-metric" data-id="mz2Stock"></div>
-              </div>
-            </div>
-            <div class="divider stocking"></div>
-            <div class="right">
-              <div>Expected: <span data-id="mz2Expected"></span></div>
-              <div>Stocked: <span data-id="mz2Stocked"></span></div>
-              <div>Remaining: <span data-id="mz2Remaining"></span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- L3 -->
-      <div class="level-tile">
-        <div class="tile-header"><h2 class="level-title">MZ Level 3</h2><div class="status-dot status-yellow"></div></div>
-        <div class="dual-section">
-          <div class="sub-section">
-            <div class="left">
-              <h3>Picking</h3>
-              <div style="position:relative;">
-                <canvas id="mz3-picking-gauge"></canvas>
-                <div class="performance-metric" data-id="mz3Pick"></div>
-              </div>
-            </div>
-            <div class="divider picking"></div>
-            <div class="right">
-              <div>Current Wave: <span data-id="mz3Wave"></span></div>
-              <div>Progress: <span data-id="mz3ProgressText"></span></div>
-              <div class="progress-bar"><div class="progress-fill" data-id="mz3Progress"></div></div>
-            </div>
-          </div>
-
-          <div class="subsection-separator"></div>
-
-          <div class="sub-section">
-            <div class="left">
-              <h3>Stocking</h3>
-              <div style="position:relative;">
-                <canvas id="mz3-stocking-gauge"></canvas>
-                <div class="performance-metric" data-id="mz3Stock"></div>
-              </div>
-            </div>
-            <div class="divider stocking"></div>
-            <div class="right">
-              <div>Expected: <span data-id="mz3Expected"></span></div>
-              <div>Stocked: <span data-id="mz3Stocked"></span></div>
-              <div>Remaining: <span data-id="mz3Remaining"></span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+      </article>
+    </section>
   </div>
 
-  <!-- CF Levels -->
-  <div class="page" id="cfLevels">
-    <div class="header">CF Levels <button onclick="navigate('mainPage')">Home</button></div>
-    <div class="levels-container-vertical">
-
-      <!-- CF L1 -->
-      <div class="level-tile">
-        <div class="tile-header"><h2 class="level-title">CF Level 1</h2><div class="status-dot status-yellow"></div></div>
-        <div class="dual-section">
-          <div class="sub-section">
-            <div class="left">
-              <h3>Picking</h3>
-              <div style="position:relative;">
-                <canvas id="cf1-picking-gauge"></canvas>
-                <div class="performance-metric" data-id="cf1Pick"></div>
-              </div>
-            </div>
-            <div class="divider picking"></div>
-            <div class="right">
-              <div>Current Wave: <span data-id="cf1Wave"></span></div>
-              <div>Progress: <span data-id="cf1ProgressText"></span></div>
-              <div class="progress-bar"><div class="progress-fill" data-id="cf1Progress"></div></div>
-            </div>
-          </div>
-
-          <div class="subsection-separator"></div>
-
-          <div class="sub-section">
-            <div class="left">
-              <h3>Stocking</h3>
-              <div style="position:relative;">
-                <canvas id="cf1-stocking-gauge"></canvas>
-                <div class="performance-metric" data-id="cf1Stock"></div>
-              </div>
-            </div>
-            <div class="divider stocking"></div>
-            <div class="right">
-              <div>Expected: <span data-id="cf1Expected"></span></div>
-              <div>Stocked: <span data-id="cf1Stocked"></span></div>
-              <div>Remaining: <span data-id="cf1Remaining"></span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- CF L2 -->
-      <div class="level-tile">
-        <div class="tile-header"><h2 class="level-title">CF Level 2</h2><div class="status-dot status-yellow"></div></div>
-        <div class="dual-section">
-          <div class="sub-section">
-            <div class="left">
-              <h3>Picking</h3>
-              <div style="position:relative;">
-                <canvas id="cf2-picking-gauge"></canvas>
-                <div class="performance-metric" data-id="cf2Pick"></div>
-              </div>
-            </div>
-            <div class="divider picking"></div>
-            <div class="right">
-              <div>Current Wave: <span data-id="cf2Wave"></span></div>
-              <div>Progress: <span data-id="cf2ProgressText"></span></div>
-              <div class="progress-bar"><div class="progress-fill" data-id="cf2Progress"></div></div>
-            </div>
-          </div>
-
-          <div class="subsection-separator"></div>
-
-          <div class="sub-section">
-            <div class="left">
-              <h3>Stocking</h3>
-              <div style="position:relative;">
-                <canvas id="cf2-stocking-gauge"></canvas>
-                <div class="performance-metric" data-id="cf2Stock"></div>
-              </div>
-            </div>
-            <div class="divider stocking"></div>
-            <div class="right">
-              <div>Expected: <span data-id="cf2Expected"></span></div>
-              <div>Stocked: <span data-id="cf2Stocked"></span></div>
-              <div>Remaining: <span data-id="cf2Remaining"></span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- CF L3 -->
-      <div class="level-tile">
-        <div class="tile-header"><h2 class="level-title">CF Level 3</h2><div class="status-dot status-yellow"></div></div>
-        <div class="dual-section">
-          <div class="sub-section">
-            <div class="left">
-              <h3>Picking</h3>
-              <div style="position:relative;">
-                <canvas id="cf3-picking-gauge"></canvas>
-                <div class="performance-metric" data-id="cf3Pick"></div>
-              </div>
-            </div>
-            <div class="divider picking"></div>
-            <div class="right">
-              <div>Current Wave: <span data-id="cf3Wave"></span></div>
-              <div>Progress: <span data-id="cf3ProgressText"></span></div>
-              <div class="progress-bar"><div class="progress-fill" data-id="cf3Progress"></div></div>
-            </div>
-          </div>
-
-          <div class="subsection-separator"></div>
-
-          <div class="sub-section">
-            <div class="left">
-              <h3>Stocking</h3>
-              <div style="position:relative;">
-                <canvas id="cf3-stocking-gauge"></canvas>
-                <div class="performance-metric" data-id="cf3Stock"></div>
-              </div>
-            </div>
-            <div class="divider stocking"></div>
-            <div class="right">
-              <div>Expected: <span data-id="cf3Expected"></span></div>
-              <div>Stocked: <span data-id="cf3Stocked"></span></div>
-              <div>Remaining: <span data-id="cf3Remaining"></span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
+  <!-- EXAMPLE LEVELS PAGE (navigation working) -->
+  <div id="mzLevels" class="page">
+    <header class="app-header">
+      MZ Levels
+      <button class="btn" onclick="navigate('mainPage')">Home</button>
+    </header>
+    <p class="note">Levels/Zone content can be added back here; navigation is active.</p>
   </div>
-
-  <!-- HB Levels -->
-  <div class="page" id="hbLevels">
-    <div class="header">HB Levels <button onclick="navigate('mainPage')">Home</button></div>
-    <div class="levels-container-vertical">
-
-      <div class="level-tile">
-        <div class="tile-header"><h2 class="level-title">HB Level 1</h2><div class="status-dot status-yellow"></div></div>
-        <div class="dual-section">
-          <div class="sub-section">
-            <div class="left"><h3>Picking</h3>
-              <div style="position:relative;">
-                <canvas id="hb1-picking-gauge"></canvas>
-                <div class="performance-metric" data-id="hb1Pick"></div>
-              </div></div>
-            <div class="divider picking"></div>
-            <div class="right">
-              <div>Current Wave: <span data-id="hb1Wave"></span></div>
-              <div>Progress: <span data-id="hb1ProgressText"></span></div>
-              <div class="progress-bar"><div class="progress-fill" data-id="hb1Progress"></div></div>
-            </div>
-          </div>
-
-          <div class="subsection-separator"></div>
-
-          <div class="sub-section">
-            <div class="left"><h3>Stocking</h3>
-              <div style="position:relative;">
-                <canvas id="hb1-stocking-gauge"></canvas>
-                <div class="performance-metric" data-id="hb1Stock"></div>
-              </div></div>
-            <div class="divider stocking"></div>
-            <div class="right">
-              <div>Expected: <span data-id="hb1Expected"></span></div>
-              <div>Stocked: <span data-id="hb1Stocked"></span></div>
-              <div>Remaining: <span data-id="hb1Remaining"></span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="level-tile">
-        <div class="tile-header"><h2 class="level-title">HB Level 2</h2><div class="status-dot status-yellow"></div></div>
-        <div class="dual-section">
-          <div class="sub-section">
-            <div class="left"><h3>Picking</h3>
-              <div style="position:relative;">
-                <canvas id="hb2-picking-gauge"></canvas>
-                <div class="performance-metric" data-id="hb2Pick"></div>
-              </div></div>
-            <div class="divider picking"></div>
-            <div class="right">
-              <div>Current Wave: <span data-id="hb2Wave"></span></div>
-              <div>Progress: <span data-id="hb2ProgressText"></span></div>
-              <div class="progress-bar"><div class="progress-fill" data-id="hb2Progress"></div></div>
-            </div>
-          </div>
-
-          <div class="subsection-separator"></div>
-
-          <div class="sub-section">
-            <div class="left"><h3>Stocking</h3>
-              <div style="position:relative;">
-                <canvas id="hb2-stocking-gauge"></canvas>
-                <div class="performance-metric" data-id="hb2Stock"></div>
-              </div></div>
-            <div class="divider stocking"></div>
-            <div class="right">
-              <div>Expected: <span data-id="hb2Expected"></span></div>
-              <div>Stocked: <span data-id="hb2Stocked"></span></div>
-              <div>Remaining: <span data-id="hb2Remaining"></span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="level-tile">
-        <div class="tile-header"><h2 class="level-title">HB Level 3</h2><div class="status-dot status-yellow"></div></div>
-        <div class="dual-section">
-          <div class="sub-section">
-            <div class="left"><h3>Picking</h3>
-              <div style="position:relative;">
-                <canvas id="hb3-picking-gauge"></canvas>
-                <div class="performance-metric" data-id="hb3Pick"></div>
-              </div></div>
-            <div class="divider picking"></div>
-            <div class="right">
-              <div>Current Wave: <span data-id="hb3Wave"></span></div>
-              <div>Progress: <span data-id="hb3ProgressText"></span></div>
-              <div class="progress-bar"><div class="progress-fill" data-id="hb3Progress"></div></div>
-            </div>
-          </div>
-
-          <div class="subsection-separator"></div>
-
-          <div class="sub-section">
-            <div class="left"><h3>Stocking</h3>
-              <div style="position:relative;">
-                <canvas id="hb3-stocking-gauge"></canvas>
-                <div class="performance-metric" data-id="hb3Stock"></div>
-              </div></div>
-            <div class="divider stocking"></div>
-            <div class="right">
-              <div>Expected: <span data-id="hb3Expected"></span></div>
-              <div>Stocked: <span data-id="hb3Stocked"></span></div>
-              <div>Remaining: <span data-id="hb3Remaining"></span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- RR Levels -->
-  <div class="page" id="rrLevels">
-    <div class="header">RR Levels <button onclick="navigate('mainPage')">Home</button></div>
-    <div class="levels-container-vertical">
-
-      <div class="level-tile">
-        <div class="tile-header"><h2 class="level-title">RR Level 1</h2><div class="status-dot status-yellow"></div></div>
-        <div class="dual-section">
-          <div class="sub-section">
-            <div class="left"><h3>Picking</h3>
-              <div style="position:relative;">
-                <canvas id="rr1-picking-gauge"></canvas>
-                <div class="performance-metric" data-id="rr1Pick"></div>
-              </div></div>
-            <div class="divider picking"></div>
-            <div class="right">
-              <div>Current Wave: <span data-id="rr1Wave"></span></div>
-              <div>Progress: <span data-id="rr1ProgressText"></span></div>
-              <div class="progress-bar"><div class="progress-fill" data-id="rr1Progress"></div></div>
-            </div>
-          </div>
-
-          <div class="subsection-separator"></div>
-
-          <div class="sub-section">
-            <div class="left"><h3>Stocking</h3>
-              <div style="position:relative;">
-                <canvas id="rr1-stocking-gauge"></canvas>
-                <div class="performance-metric" data-id="rr1Stock"></div>
-              </div></div>
-            <div class="divider stocking"></div>
-            <div class="right">
-              <div>Expected: <span data-id="rr1Expected"></span></div>
-              <div>Stocked: <span data-id="rr1Stocked"></span></div>
-              <div>Remaining: <span data-id="rr1Remaining"></span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="level-tile">
-        <div class="tile-header"><h2 class="level-title">RR Level 2</h2><div class="status-dot status-yellow"></div></div>
-        <div class="dual-section">
-          <div class="sub-section">
-            <div class="left"><h3>Picking</h3>
-              <div style="position:relative;">
-                <canvas id="rr2-picking-gauge"></canvas>
-                <div class="performance-metric" data-id="rr2Pick"></div>
-              </div></div>
-            <div class="divider picking"></div>
-            <div class="right">
-              <div>Current Wave: <span data-id="rr2Wave"></span></div>
-              <div>Progress: <span data-id="rr2ProgressText"></span></div>
-              <div class="progress-bar"><div class="progress-fill" data-id="rr2Progress"></div></div>
-            </div>
-          </div>
-
-          <div class="subsection-separator"></div>
-
-          <div class="sub-section">
-            <div class="left"><h3>Stocking</h3>
-              <div style="position:relative;">
-                <canvas id="rr2-stocking-gauge"></canvas>
-                <div class="performance-metric" data-id="rr2Stock"></div>
-              </div></div>
-            <div class="divider stocking"></div>
-            <div class="right">
-              <div>Expected: <span data-id="rr2Expected"></span></div>
-              <div>Stocked: <span data-id="rr2Stocked"></span></div>
-              <div>Remaining: <span data-id="rr2Remaining"></span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- NC Levels -->
-  <div class="page" id="ncLevels">
-    <div class="header">NC Levels <button onclick="navigate('mainPage')">Home</button></div>
-    <div class="levels-container-vertical">
-
-      <div class="level-tile">
-        <div class="tile-header"><h2 class="level-title">NC - Oil</h2><div class="status-dot status-yellow"></div></div>
-        <div class="dual-section">
-          <div class="sub-section">
-            <div class="left"><h3>Picking</h3>
-              <div style="position:relative;">
-                <canvas id="ncoil-picking-gauge"></canvas>
-                <div class="performance-metric" data-id="ncoilPick"></div>
-              </div></div>
-            <div class="divider picking"></div>
-            <div class="right">
-              <div>Current Wave: <span data-id="ncoilWave"></span></div>
-              <div>Progress: <span data-id="ncoilProgressText"></span></div>
-              <div class="progress-bar"><div class="progress-fill" data-id="ncoilProgress"></div></div>
-            </div>
-          </div>
-
-          <div class="subsection-separator"></div>
-
-          <div class="sub-section">
-            <div class="left"><h3>Stocking</h3>
-              <div style="position:relative;">
-                <canvas id="ncoil-stocking-gauge"></canvas>
-                <div class="performance-metric" data-id="ncoilStock"></div>
-              </div></div>
-            <div class="divider stocking"></div>
-            <div class="right">
-              <div>Expected: <span data-id="ncoilExpected"></span></div>
-              <div>Stocked: <span data-id="ncoilStocked"></span></div>
-              <div>Remaining: <span data-id="ncoilRemaining"></span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="level-tile">
-        <div class="tile-header"><h2 class="level-title">NC - PBS</h2><div class="status-dot status-yellow"></div></div>
-        <div class="dual-section">
-          <div class="sub-section">
-            <div class="left"><h3>Picking</h3>
-              <div style="position:relative;">
-                <canvas id="ncpbs-picking-gauge"></canvas>
-                <div class="performance-metric" data-id="ncpbsPick"></div>
-              </div></div>
-            <div class="divider picking"></div>
-            <div class="right">
-              <div>Current Wave: <span data-id="ncpbsWave"></span></div>
-              <div>Progress: <span data-id="ncpbsProgressText"></span></div>
-              <div class="progress-bar"><div class="progress-fill" data-id="ncpbsProgress"></div></div>
-            </div>
-          </div>
-
-          <div class="subsection-separator"></div>
-
-          <div class="sub-section">
-            <div class="left"><h3>Stocking</h3>
-              <div style="position:relative;">
-                <canvas id="ncpbs-stocking-gauge"></canvas>
-                <div class="performance-metric" data-id="ncpbsStock"></div>
-              </div></div>
-            <div class="divider stocking"></div>
-            <div class="right">
-              <div>Expected: <span data-id="ncpbsExpected"></span></div>
-              <div>Stocked: <span data-id="ncpbsStocked"></span></div>
-              <div>Remaining: <span data-id="ncpbsRemaining"></span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="level-tile">
-        <div class="tile-header"><h2 class="level-title">NC - High Pick</h2><div class="status-dot status-yellow"></div></div>
-        <div class="dual-section">
-          <div class="sub-section">
-            <div class="left"><h3>Picking</h3>
-              <div style="position:relative;">
-                <canvas id="nchighpick-picking-gauge"></canvas>
-                <div class="performance-metric" data-id="nchighpickPick"></div>
-              </div></div>
-            <div class="divider picking"></div>
-            <div class="right">
-              <div>Current Wave: <span data-id="nchighpickWave"></span></div>
-              <div>Progress: <span data-id="nchighpickProgressText"></span></div>
-              <div class="progress-bar"><div class="progress-fill" data-id="nchighpickProgress"></div></div>
-            </div>
-          </div>
-
-          <div class="subsection-separator"></div>
-
-          <div class="sub-section">
-            <div class="left"><h3>Stocking</h3>
-              <div style="position:relative;">
-                <canvas id="nchighpick-stocking-gauge"></canvas>
-                <div class="performance-metric" data-id="nchighpickStock"></div>
-              </div></div>
-            <div class="divider stocking"></div>
-            <div class="right">
-              <div>Expected: <span data-id="nchighpickExpected"></span></div>
-              <div>Stocked: <span data-id="nchighpickStocked"></span></div>
-              <div>Remaining: <span data-id="nchighpickRemaining"></span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="level-tile">
-        <div class="tile-header"><h2 class="level-title">NC - NCRR</h2><div class="status-dot status-yellow"></div></div>
-        <div class="dual-section">
-          <div class="sub-section">
-            <div class="left"><h3>Picking</h3>
-              <div style="position:relative;">
-                <canvas id="ncncrr-picking-gauge"></canvas>
-                <div class="performance-metric" data-id="ncncrrPick"></div>
-              </div></div>
-            <div class="divider picking"></div>
-            <div class="right">
-              <div>Current Wave: <span data-id="ncncrrWave"></span></div>
-              <div>Progress: <span data-id="ncncrrProgressText"></span></div>
-              <div class="progress-bar"><div class="progress-fill" data-id="ncncrrProgress"></div></div>
-            </div>
-          </div>
-
-          <div class="subsection-separator"></div>
-
-          <div class="sub-section">
-            <div class="left"><h3>Stocking</h3>
-              <div style="position:relative;">
-                <canvas id="ncncrr-stocking-gauge"></canvas>
-                <div class="performance-metric" data-id="ncncrrStock"></div>
-              </div></div>
-            <div class="divider stocking"></div>
-            <div class="right">
-              <div>Expected: <span data-id="ncncrrExpected"></span></div>
-              <div>Stocked: <span data-id="ncncrrStocked"></span></div>
-              <div>Remaining: <span data-id="ncncrrRemaining"></span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- =================== ZONES (MZ) =================== -->
-
-  <!-- MZ Level 1 Zones -->
-  <div class="page" id="mzLevel1">
-    <div class="header">MZ Level 1 Zones <button onclick="navigate('mzLevels')">Back</button></div>
-    <div class="levels-container-vertical">
-      <div class="level-tile">
-        <div class="tile-header"><h2 class="level-title">Zone 10</h2><div class="status-dot status-green"></div></div>
-        <div class="dual-section">
-          <div class="sub-section">
-            <div class="left"><h3>Picking</h3>
-              <div style="position:relative;">
-                <canvas id="z10-picking-gauge"></canvas>
-                <div class="performance-metric" data-id="z10Pick"></div>
-              </div></div>
-            <div class="divider picking"></div>
-            <div class="right">
-              <div>Current Wave: <span data-id="z10Wave"></span></div>
-              <div>Progress: <span data-id="z10ProgressText"></span></div>
-              <div class="progress-bar"><div class="progress-fill" data-id="z10Progress"></div></div>
-            </div>
-          </div>
-
-          <div class="subsection-separator"></div>
-
-          <div class="sub-section">
-            <div class="left"><h3>Stocking</h3>
-              <div style="position:relative;">
-                <canvas id="z10-stocking-gauge"></canvas>
-                <div class="performance-metric" data-id="z10Stock"></div>
-              </div></div>
-            <div class="divider stocking"></div>
-            <div class="right">
-              <div>Expected: <span data-id="z10Expected"></span></div>
-              <div>Stocked: <span data-id="z10Stocked"></span></div>
-              <div>Remaining: <span data-id="z10Remaining"></span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="level-tile">
-        <div class="tile-header"><h2 class="level-title">Zone 11</h2><div class="status-dot status-yellow"></div></div>
-        <div class="dual-section">
-          <div class="sub-section">
-            <div class="left"><h3>Picking</h3>
-              <div style="position:relative;">
-                <canvas id="z11-picking-gauge"></canvas>
-                <div class="performance-metric" data-id="z11Pick"></div>
-              </div></div>
-            <div class="divider picking"></div>
-            <div class="right">
-              <div>Current Wave: <span data-id="z11Wave"></span></div>
-              <div>Progress: <span data-id="z11ProgressText"></span></div>
-              <div class="progress-bar"><div class="progress-fill" data-id="z11Progress"></div></div>
-            </div>
-          </div>
-
-          <div class="subsection-separator"></div>
-
-          <div class="sub-section">
-            <div class="left"><h3>Stocking</h3>
-              <div style="position:relative;">
-                <canvas id="z11-stocking-gauge"></canvas>
-                <div class="performance-metric" data-id="z11Stock"></div>
-              </div></div>
-            <div class="divider stocking"></div>
-            <div class="right">
-              <div>Expected: <span data-id="z11Expected"></span></div>
-              <div>Stocked: <span data-id="z11Stocked"></span></div>
-              <div>Remaining: <span data-id="z11Remaining"></span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- MZ Level 2 Zones -->
-  <div class="page" id="mzLevel2">
-    <div class="header">MZ Level 2 Zones <button onclick="navigate('mzLevels')">Back</button></div>
-    <div class="levels-container-vertical">
-      <div class="level-tile">
-        <div class="tile-header"><h2 class="level-title">Zone 20</h2><div class="status-dot status-green"></div></div>
-        <div class="dual-section">
-          <div class="sub-section">
-            <div class="left"><h3>Picking</h3>
-              <div style="position:relative;">
-                <canvas id="z20-picking-gauge"></canvas>
-                <div class="performance-metric" data-id="z20Pick"></div>
-              </div></div>
-            <div class="divider picking"></div>
-            <div class="right">
-              <div>Current Wave: <span data-id="z20Wave"></span></div>
-              <div>Progress: <span data-id="z20ProgressText"></span></div>
-              <div class="progress-bar"><div class="progress-fill" data-id="z20Progress"></div></div>
-            </div>
-          </div>
-
-          <div class="subsection-separator"></div>
-
-          <div class="sub-section">
-            <div class="left"><h3>Stocking</h3>
-              <div style="position:relative;">
-                <canvas id="z20-stocking-gauge"></canvas>
-                <div class="performance-metric" data-id="z20Stock"></div>
-              </div></div>
-            <div class="divider stocking"></div>
-            <div class="right">
-              <div>Expected: <span data-id="z20Expected"></span></div>
-              <div>Stocked: <span data-id="z20Stocked"></span></div>
-              <div>Remaining: <span data-id="z20Remaining"></span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="level-tile">
-        <div class="tile-header"><h2 class="level-title">Zone 21</h2><div class="status-dot status-red"></div></div>
-        <div class="dual-section">
-          <div class="sub-section">
-            <div class="left"><h3>Picking</h3>
-              <div style="position:relative;">
-                <canvas id="z21-picking-gauge"></canvas>
-                <div class="performance-metric" data-id="z21Pick"></div>
-              </div></div>
-            <div class="divider picking"></div>
-            <div class="right">
-              <div>Current Wave: <span data-id="z21Wave"></span></div>
-              <div>Progress: <span data-id="z21ProgressText"></span></div>
-              <div class="progress-bar"><div class="progress-fill" data-id="z21Progress"></div></div>
-            </div>
-          </div>
-
-          <div class="subsection-separator"></div>
-
-          <div class="sub-section">
-            <div class="left"><h3>Stocking</h3>
-              <div style="position:relative;">
-                <canvas id="z21-stocking-gauge"></canvas>
-                <div class="performance-metric" data-id="z21Stock"></div>
-              </div></div>
-            <div class="divider stocking"></div>
-            <div class="right">
-              <div>Expected: <span data-id="z21Expected"></span></div>
-              <div>Stocked: <span data-id="z21Stocked"></span></div>
-              <div>Remaining: <span data-id="z21Remaining"></span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- MZ Level 3 Zones -->
-  <div class="page" id="mzLevel3">
-    <div class="header">MZ Level 3 Zones <button onclick="navigate('mzLevels')">Back</button></div>
-    <div class="levels-container-vertical">
-
-      <div class="level-tile">
-        <div class="tile-header"><h2 class="level-title">Zone 30</h2><div class="status-dot status-green"></div></div>
-        <div class="dual-section">
-          <div class="sub-section">
-            <div class="left"><h3>Picking</h3>
-              <div style="position:relative;">
-                <canvas id="z30-picking-gauge"></canvas>
-                <div class="performance-metric" data-id="z30Pick"></div>
-              </div></div>
-            <div class="divider picking"></div>
-            <div class="right">
-              <div>Current Wave: <span data-id="z30Wave"></span></div>
-              <div>Progress: <span data-id="z30ProgressText"></span></div>
-              <div class="progress-bar"><div class="progress-fill" data-id="z30Progress"></div></div>
-            </div>
-          </div>
-
-          <div class="subsection-separator"></div>
-
-          <div class="sub-section">
-            <div class="left"><h3>Stocking</h3>
-              <div style="position:relative;">
-                <canvas id="z30-stocking-gauge"></canvas>
-                <div class="performance-metric" data-id="z30Stock"></div>
-              </div></div>
-            <div class="divider stocking"></div>
-            <div class="right">
-              <div>Expected: <span data-id="z30Expected"></span></div>
-              <div>Stocked: <span data-id="z30Stocked"></span></div>
-              <div>Remaining: <span data-id="z30Remaining"></span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="level-tile">
-        <div class="tile-header"><h2 class="level-title">Zone 31</h2><div class="status-dot status-green"></div></div>
-        <div class="dual-section">
-          <div class="sub-section">
-            <div class="left"><h3>Picking</h3>
-              <div style="position:relative;">
-                <canvas id="z31-picking-gauge"></canvas>
-                <div class="performance-metric" data-id="z31Pick"></div>
-              </div></div>
-            <div class="divider picking"></div>
-            <div class="right">
-              <div>Current Wave: <span data-id="z31Wave"></span></div>
-              <div>Progress: <span data-id="z31ProgressText"></span></div>
-              <div class="progress-bar"><div class="progress-fill" data-id="z31Progress"></div></div>
-            </div>
-          </div>
-
-          <div class="subsection-separator"></div>
-
-          <div class="sub-section">
-            <div class="left"><h3>Stocking</h3>
-              <div style="position:relative;">
-                <canvas id="z31-stocking-gauge"></canvas>
-                <div class="performance-metric" data-id="z31Stock"></div>
-              </div></div>
-            <div class="divider stocking"></div>
-            <div class="right">
-              <div>Expected: <span data-id="z31Expected"></span></div>
-              <div>Stocked: <span data-id="z31Stocked"></span></div>
-              <div>Remaining: <span data-id="z31Remaining"></span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
 </body>
 </html>
