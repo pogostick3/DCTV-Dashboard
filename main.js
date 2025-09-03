@@ -1,6 +1,6 @@
-/* main.js — vanilla-canvas gauges w/ needles + data from data/dashboard.json */
+/* main.js — canvas gauges w/ triangle needle + data from data/dashboard.json */
 
-// thresholds
+/* ---------- helpers & theme ---------- */
 const COLORS = {
   green: "#22c55e",
   yellow: "#fbbf24",
@@ -8,22 +8,21 @@ const COLORS = {
   grey: "#e5e7eb",
   arc: "#e5e7eb"
 };
-
 const clamp = (n,min=0,max=100)=>Math.max(min,Math.min(max,Number(n)||0));
 const colorFor = v => v < 75 ? COLORS.red : (v <= 90 ? COLORS.yellow : COLORS.green);
 
-// basic page nav API (works for all pages that exist)
+/* ---------- navigation ---------- */
 window.navigate = function(pageId){
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   const el = document.getElementById(pageId);
   if(el) el.classList.add("active");
 };
 
-// retina-safe canvas sizing
+/* ---------- canvas gauge ---------- */
 function fitCanvas(canvas){
   const ratio = Math.max(1, Math.floor(window.devicePixelRatio || 1));
-  const cssW = canvas.getAttribute("width");
-  const cssH = canvas.getAttribute("height");
+  const cssW = Number(canvas.getAttribute("width"));
+  const cssH = Number(canvas.getAttribute("height"));
   canvas.style.width = cssW + "px";
   canvas.style.height = cssH + "px";
   canvas.width = cssW * ratio;
@@ -33,7 +32,6 @@ function fitCanvas(canvas){
   return ctx;
 }
 
-/** Draw a semicircle gauge with a triangular needle pointing at the end of the colored arc. */
 function drawGauge(canvas, value){
   if(!canvas) return;
   const v = clamp(value);
@@ -42,12 +40,13 @@ function drawGauge(canvas, value){
   const w = parseInt(canvas.style.width);
   const h = parseInt(canvas.style.height);
   const cx = w/2;
-  const cy = h-6;           // center at bottom with small margin
+  const cy = h-6;
   const radius = Math.min(w/2-6, h-8);
-  const lw = 26;            // thickness
+  const lw = 26;
+
   ctx.clearRect(0,0,w,h);
 
-  // background arc (full)
+  // background arc
   ctx.beginPath();
   ctx.strokeStyle = COLORS.arc;
   ctx.lineWidth = lw;
@@ -56,7 +55,7 @@ function drawGauge(canvas, value){
   ctx.stroke();
 
   // colored arc
-  const endAngle = Math.PI - (v/100)*Math.PI;  // from left (π) towards right (0)
+  const endAngle = Math.PI - (v/100)*Math.PI; // left (π) to right (0)
   ctx.beginPath();
   ctx.strokeStyle = colorFor(v);
   ctx.lineWidth = lw;
@@ -66,14 +65,10 @@ function drawGauge(canvas, value){
   // triangle needle pointing at arc end
   const angle = endAngle;
   const tip = { x: cx + radius * Math.cos(angle), y: cy + radius * Math.sin(angle) };
-  const innerR = radius - lw + 4; // a bit inside
+  const innerR = radius - lw + 4;
   const baseCenter = { x: cx + innerR * Math.cos(angle), y: cy + innerR * Math.sin(angle) };
-
-  // tangent vector for width
-  const tx = -Math.sin(angle);
-  const ty =  Math.cos(angle);
+  const tx = -Math.sin(angle), ty = Math.cos(angle);
   const half = 8;
-
   const p1 = { x: baseCenter.x + tx*half, y: baseCenter.y + ty*half };
   const p2 = { x: baseCenter.x - tx*half, y: baseCenter.y - ty*half };
 
@@ -86,17 +81,15 @@ function drawGauge(canvas, value){
   ctx.fill();
 }
 
-/* ------- Data plumbing ------- */
+/* ---------- data plumbing ---------- */
 async function loadData(){
   const res = await fetch("data/dashboard.json", {cache:"no-store"});
   return await res.json();
 }
 
-// prefer Dept sheet if present, else fallback to Level 1 data
 function getDeptState(data, dept){
   const d = data[dept] || {};
-  // Dept sheet override
-  if(d.dept){
+  if(d.dept){ // Dept sheet override
     const s = d.dept;
     return {
       pickPerf: clamp(s.pick_perf),
@@ -112,7 +105,6 @@ function getDeptState(data, dept){
       remaining: Number(s.remaining)||0
     };
   }
-  // fallback: level 1 if available
   const lvl = d.levels ? (d.levels[1] || d.levels["1"]) : null;
   if(lvl){
     return {
@@ -120,7 +112,7 @@ function getDeptState(data, dept){
       stockPerf: clamp(lvl.stocking?.perf),
       wave: Number(lvl.picking?.wave)||0,
       progress: clamp(lvl.picking?.progress),
-      orders: { done: 0, total: 0 }, // not available on levels
+      orders: { done: 0, total: 0 },
       expected: Number(lvl.stocking?.expected)||0,
       stocked: Number(lvl.stocking?.stocked)||0,
       remaining: Number(lvl.stocking?.remaining)||0
@@ -145,14 +137,17 @@ function setStatusDot(el, pickPerf, stockPerf){
 
 function fillTile(prefix, state){
   // numbers
-  document.getElementById(`${prefix}PickPerf`).textContent = `${state.pickPerf}%`;
-  document.getElementById(`${prefix}StockPerf`).textContent = `${state.stockPerf}%`;
-  document.getElementById(`${prefix}Wave`).textContent = state.wave;
-  document.getElementById(`${prefix}ProgressText`).textContent = `${state.progress}%`;
-  document.getElementById(`${prefix}Progress`).style.width = `${state.progress}%`;
-  document.getElementById(`${prefix}Expected`).textContent = state.expected.toLocaleString();
-  document.getElementById(`${prefix}Stocked`).textContent = state.stocked.toLocaleString();
-  document.getElementById(`${prefix}Left`).textContent = state.remaining.toLocaleString();
+  const set = (id, text) => { const el = document.getElementById(id); if(el) el.textContent = text; };
+
+  set(`${prefix}PickPerf`, `${state.pickPerf}%`);
+  set(`${prefix}StockPerf`, `${state.stockPerf}%`);
+  set(`${prefix}Wave`, state.wave);
+  const prog = document.getElementById(`${prefix}Progress`);
+  if(prog) prog.style.width = `${state.progress}%`;
+  set(`${prefix}ProgressText`, `${state.progress}%`);
+  set(`${prefix}Expected`, state.expected.toLocaleString());
+  set(`${prefix}Stocked`, state.stocked.toLocaleString());
+  set(`${prefix}Left`, state.remaining.toLocaleString());
   const ordersEl = document.getElementById(`${prefix}Orders`);
   if(ordersEl) ordersEl.textContent = `${state.orders.done}/${state.orders.total}`;
 
@@ -165,6 +160,7 @@ function fillTile(prefix, state){
 
 function fillShipping(shipping){
   const list = document.getElementById("shippingList");
+  if(!list) return;
   list.innerHTML = "";
   if(!shipping || !shipping.waves || !shipping.waves.length){
     const p = document.createElement("p");
@@ -185,27 +181,26 @@ function fillShipping(shipping){
   });
 }
 
-/* ------- Boot ------- */
+/* ---------- boot ---------- */
 window.addEventListener("DOMContentLoaded", async () => {
   try{
     const data = await loadData();
 
-    // Home tiles
+    // IMPORTANT: use lowercase prefixes to match HTML ids
     ["mz","cf","hb","nc","rr"].forEach(dept=>{
       const s = getDeptState(data, dept);
-      fillTile(dept.toUpperCase(), s); // IDs use uppercase prefixes
+      fillTile(dept, s);
     });
 
     if(data.shipping) fillShipping(data.shipping);
 
-    // Clicking a dept tile navigates if a page exists
+    // dept tile click -> navigate if that page exists
     document.querySelectorAll('.tile[data-dept]').forEach(t=>{
-      t.addEventListener('click', e=>{
+      t.addEventListener('click', ()=>{
         const dept = t.getAttribute('data-dept');
-        // e.g., "mz" -> "mzLevels" page
         const targetId = `${dept}Levels`;
         if(document.getElementById(targetId)) navigate(targetId);
-      }, {capture:false});
+      });
     });
   }catch(err){
     console.error("Failed to initialize:", err);
