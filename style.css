@@ -54,7 +54,7 @@ body{
   cursor:default;
   display:flex;
   flex-direction:column;
-  min-height: 360px; /* equalize heights */
+  min-height: 380px; /* equalize heights */
 }
 .tile[data-dept]{cursor:pointer;}
 
@@ -91,7 +91,6 @@ body{
 
 .gauge-wrap{
   width:100%;
-  height:auto;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -110,7 +109,7 @@ body{
   transition:width .5s ease;
 }
 
-/* Small text lines (key/value) */
+/* Small text lines */
 .kv{ font-size:14px; color:var(--text); margin:3px 0; }
 .subheading{ margin:6px 0 12px; font-size:16px; }
 
