@@ -1,132 +1,148 @@
 :root{
   --bg:#f3f4f6;
   --card:#ffffff;
-  --text:#1f2937;
-  --muted:#6b7280;
-  --green:#22c55e;
-  --yellow:#fbbf24;
-  --red:#ef4444;
-  --grey:#e5e7eb;
-  --shadow:0 6px 18px rgba(0,0,0,.06);
+  --ink:#222;
+  --muted:#666;
+  --shadow:0 4px 16px rgba(0,0,0,0.06);
+  --green:#2ba84a;
+  --red:#e04444;
+  --yellow:#f1b31c;
+  --bar-bg:#d9d9dd;
 }
 
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
+*{ box-sizing:border-box; }
+html,body{
   margin:0;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
-  color:var(--text);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  color:var(--ink);
   background:var(--bg);
 }
 
-/* Pages */
-.page{display:none; padding:28px 22px;}
-.page.active{display:block}
-
-/* Header */
-.app-header{
-  font-size:40px;
-  font-weight:800;
-  text-align:center;
-  margin-bottom:22px;
+.header{
+  display:flex; align-items:center; justify-content:center;
+  padding:18px 16px 8px;
 }
+.header h1{ margin:0; font-size:40px; letter-spacing:.5px }
 
-/* Grid */
-.tile-grid{
+.page{ display:none; padding:12px 20px 40px; }
+.page.active{ display:block; }
+
+.subheader{
+  display:flex; align-items:center; gap:12px;
+  padding:8px 0 16px;
+}
+.subheader h2{ margin:0 }
+
+.btn{
+  background:#1976d2; color:#fff; border:0; border-radius:10px;
+  padding:8px 14px; cursor:pointer; font-weight:600;
+}
+.btn:hover{ background:#135ea7; }
+
+/* --- Grid --- */
+.tiles-grid{
   display:grid;
-  grid-template-columns: repeat(3, minmax(320px, 1fr));
-  gap:22px;
-  align-items:stretch;
+  grid-template-columns: repeat(12, 1fr);
+  gap:16px;
+  max-width:1400px;
+  margin:0 auto;
 }
-@media (max-width:1100px){
-  .tile-grid{ grid-template-columns: repeat(2, minmax(320px, 1fr)); }
+@media (max-width: 1200px){
+  .tiles-grid{ grid-template-columns: repeat(8, 1fr); }
 }
-@media (max-width:720px){
-  .tile-grid{ grid-template-columns: 1fr; }
+@media (max-width: 800px){
+  .tiles-grid{ grid-template-columns: repeat(4, 1fr); }
 }
 
-/* Tile */
-.tile{
+.card{
+  grid-column: span 4;
   background:var(--card);
-  border-radius:14px;
+  border-radius:16px;
   box-shadow:var(--shadow);
-  padding:16px 18px 18px;
-  cursor:default;
-  display:flex;
-  flex-direction:column;
-  min-height: 380px; /* equalize heights */
+  padding:18px 16px 16px;
+  position:relative;
+  overflow:hidden; /* keeps card tidy, gauges handle their own overflow */
 }
-.tile[data-dept]{cursor:pointer;}
+.card.clickable{ cursor:pointer; }
+.card h3{ margin:0 0 8px 0; }
+.card .krow{
+  display:flex; gap:24px; justify-content:space-between; align-items:flex-start;
+  margin-top:4px;
+}
 
-.tile-header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin-bottom:6px;
-}
-.tile-header h3{
-  margin:0;
-  font-size:22px;
-  font-weight:800;
-}
+/* Status light (always visible) */
 .status-dot{
-  width:10px;height:10px;border-radius:50%;
-  background:var(--grey);
-  box-shadow:0 0 0 3px rgba(0,0,0,.03) inset;
+  position:absolute; right:14px; top:14px;
+  width:10px; height:10px; border-radius:50%;
+  background:var(--yellow);
+  box-shadow:0 0 0 2px rgba(0,0,0,0.04) inset;
 }
 .status-green{ background:var(--green); }
 .status-yellow{ background:var(--yellow); }
 .status-red{ background:var(--red); }
 
-.tile-body{margin-top:8px}
-.two-col{
-  display:grid;
-  grid-template-columns: 1fr 1fr;
-  gap:16px;
-}
-.side .metric-line{
-  font-size:14px; color:var(--muted); display:flex; gap:8px; align-items:center;
-}
-.side .metric-line strong{color:var(--text)}
-
+/* --- Gauge wrapper --- */
 .gauge-wrap{
-  width:100%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  margin:4px 0 6px;
+  position:relative;
+  width:220px; height:120px;  /* prevents clipping and standardizes size */
+  overflow:visible;           /* lets the needle extend past canvas safely */
+  margin:4px auto 6px;
+}
+.gauge-canvas{
+  width:220px !important; height:120px !important;
 }
 
-/* Progress bars */
+/* Needle overlay */
+.needle{
+  position:absolute; left:0; top:0;
+  width:220px; height:120px;
+  pointer-events:none;
+}
+.needle svg{ width:220px; height:120px; overflow:visible; }
+.needle path{ stroke:#444; fill:#444; }
+
+/* Metrics */
+.metric-title{
+  font-size:14px; color:var(--muted); margin:0 0 6px;
+}
+.metrics{
+  display:flex; flex-direction:column;
+  gap:4px; font-size:14px;
+}
+.label{ color:var(--muted); }
+
+/* Progress bar */
 .progress{
-  width:100%; height:12px; background:var(--grey);
-  border-radius:999px; overflow:hidden; margin:6px 0 3px;
+  height:12px; width:100%; background:var(--bar-bg);
+  border-radius:10px; overflow:hidden;
 }
-.progress .progress-fill{
-  height:100%; width:0%;
-  background:var(--green);
-  border-radius:999px 0 0 999px;
-  transition:width .5s ease;
-}
-
-/* Small text lines */
-.kv{ font-size:14px; color:var(--text); margin:3px 0; }
-.subheading{ margin:6px 0 12px; font-size:16px; }
+.progress > span{ display:block; height:100%; background:var(--green); }
 
 /* Shipping list */
-.shipping-list{ display:flex; flex-direction:column; gap:10px; }
-.wave-row{ display:flex; align-items:center; gap:10px; }
-.wave-row .label{ width:56px; font-weight:600; color:var(--muted); text-align:right;}
-.wave-row .bar{ flex:1; height:12px; background:var(--grey); border-radius:999px; overflow:hidden;}
-.wave-row .bar .fill{ height:100%; width:0; background:var(--green); transition:width .5s}
-.wave-row .pct{ width:46px; text-align:right; color:var(--muted); font-size:13px}
-
-/* Buttons */
-.btn{
-  margin-left:10px; padding:6px 12px; font-size:16px;
-  border:none; border-radius:10px; color:#fff; background:#2563eb; cursor:pointer;
+.ship-list{ margin-top:8px; display:grid; gap:8px; }
+.ship-row{
+  display:grid; grid-template-columns: 70px 1fr 46px; gap:8px; align-items:center;
+  font-size:14px;
 }
-.btn:hover{ filter:brightness(.95) }
+.ship-row .progress{ height:10px; }
 
-/* Notes */
-.note{ text-align:center; color:var(--muted); }
+/* Levels / zones grid uses same card layout */
+.levels-grid{
+  display:grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap:16px;
+  max-width:1200px;
+  margin:0 auto;
+}
+.level-card{ grid-column: span 12; }
+.level-row{
+  display:grid;
+  grid-template-columns: 1fr 1px 1fr;
+  gap:16px; align-items:center;
+}
+.vrule{ width:1px; height:100%; background:#e7e7ea; border-radius:1px; }
+.side{
+  display:flex; flex-direction:column; gap:8px; align-items:center;
+  padding:10px;
+}
+.side .metrics{ width:220px; }
