@@ -19,7 +19,7 @@ const setBarWidthById = (id, v) => { const el = document.getElementById(id); if 
 
 function perfColorName(value) {
   if (value < 75) return 'red';
-  if (value <= 90) return 'yellow';
+  if (value < 90) return 'yellow';
   return 'green';
 }
 function perfColorHex(name) {
